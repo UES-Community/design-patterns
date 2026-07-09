@@ -1,0 +1,37 @@
+---
+title: "factory-method en go"
+language: "go"
+---
+
+```go
+// Go — Transportes HTTP con factory method
+package transport
+
+type Transport interface {
+    Request(url string) ([]byte, error)
+}
+
+type Transporter interface {
+    CreateTransport() Transport
+}
+
+type HTTPTransport struct{}
+func (h *HTTPTransport) Request(url string) ([]byte, error) {
+    return []byte("http response"), nil
+}
+
+type HTTPSTransport struct{}
+func (h *HTTPSTransport) Request(url string) ([]byte, error) {
+    return []byte("https response"), nil
+}
+
+type HTTPClient struct{}
+func (c *HTTPClient) CreateTransport() Transport {
+    return &HTTPTransport{}
+}
+
+type HTTPSClient struct{}
+func (c *HTTPSClient) CreateTransport() Transport {
+    return &HTTPSTransport{}
+}
+```

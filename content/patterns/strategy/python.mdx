@@ -1,0 +1,64 @@
+---
+title: "strategy en python"
+language: "python"
+---
+
+```python
+# Python — Procesadores de pago
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class PaymentResult:
+    success: bool
+    transaction_id: str
+    method: str
+
+class PaymentStrategy(ABC):
+    @abstractmethod
+    def pay(self, amount: float) -> PaymentResult: ...
+
+class CreditCardStrategy(PaymentStrategy):
+    def __init__(self, card_number: str, cvv: str):
+        self.card_number = card_number[-4:]  # solo últimos 4
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Charging ${amount} to card ending in {self.card_number}')
+        return PaymentResult(True, f'CC-{id(self)}', 'credit_card')
+
+class PayPalStrategy(PaymentStrategy):
+    def __init__(self, email: str):
+        self.email = email
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Sending ${amount} via PayPal to {self.email}')
+        return PaymentResult(True, f'PP-{id(self)}', 'paypal')
+
+class CryptoStrategy(PaymentStrategy):
+    def __init__(self, wallet: str):
+        self.wallet = wallet
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Sending ${amount} BTC to {self.wallet[:8]}...')
+        return PaymentResult(True, f'BTC-{id(self)}', 'crypto')
+
+class Checkout:
+    def __init__(self, strategy: PaymentStrategy):
+        self._strategy = strategy
+
+    @property
+    def strategy(self) -> PaymentStrategy:
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, value: PaymentStrategy) -> None:
+        self._strategy = value
+
+    def pay(self, amount: float) -> PaymentResult:
+        return self._strategy.pay(amount)
+
+# Uso
+checkout = Checkout(CreditCardStrategy('4111111111111234', '123'))
+result = checkout.pay(99.99)
+print(result)
+```

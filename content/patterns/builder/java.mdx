@@ -1,0 +1,44 @@
+---
+title: "builder en java"
+language: "java"
+---
+
+```java
+// Java — Email builder inmutable
+public final class Email {
+    private final String from;
+    private final java.util.List<String> to;
+    private final String subject;
+    private final String body;
+    private final boolean html;
+
+    private Email(Builder builder) {
+        this.from = builder.from;
+        this.to = java.util.Collections.unmodifiableList(builder.to);
+        this.subject = builder.subject;
+        this.body = builder.body;
+        this.html = builder.html;
+    }
+
+    public static class Builder {
+        private String from;
+        private java.util.List<String> to = new java.util.ArrayList<>();
+        private String subject = "";
+        private String body = "";
+        private boolean html = false;
+
+        public Builder from(String from) { this.from = from; return this; }
+        public Builder to(String... recipients) {
+            this.to.addAll(java.util.Arrays.asList(recipients));
+            return this;
+        }
+        public Builder subject(String subject) { this.subject = subject; return this; }
+        public Builder body(String body) { this.body = body; return this; }
+        public Builder asHtml() { this.html = true; return this; }
+        public Email build() {
+            if (from == null || to.isEmpty()) throw new IllegalStateException("from and to are required");
+            return new Email(this);
+        }
+    }
+}
+```

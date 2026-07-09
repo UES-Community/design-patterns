@@ -1,0 +1,35 @@
+---
+title: "command en java"
+language: "java"
+---
+
+```java
+// Java — GUI con macro recording
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public interface Command {
+    void execute();
+    void undo();
+}
+
+public class MacroRecorder {
+    private final Deque<Command> history = new ArrayDeque<>();
+    private boolean recording = false;
+    private final java.util.List<Command> macro = new java.util.ArrayList<>();
+
+    public void execute(Command cmd) {
+        cmd.execute();
+        history.push(cmd);
+        if (recording) macro.add(cmd);
+    }
+
+    public void undo() {
+        if (!history.isEmpty()) history.pop().undo();
+    }
+
+    public void startRecording() { recording = true; macro.clear(); }
+    public void stopRecording()  { recording = false; }
+    public void playMacro()      { macro.forEach(Command::execute); }
+}
+```

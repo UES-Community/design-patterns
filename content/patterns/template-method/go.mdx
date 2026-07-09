@@ -1,0 +1,41 @@
+---
+title: "template-method en go"
+language: "go"
+---
+
+```go
+// Go — Pipeline de procesamiento
+package template
+
+import "fmt"
+
+type Processor interface {
+    ReadInput() []string
+    Process(items []string) []string
+    WriteOutput(items []string)
+    Run()
+}
+
+type BaseProcessor struct {
+    Processor
+}
+
+func (b *BaseProcessor) Run() {
+    items := b.Processor.ReadInput()
+    processed := b.Processor.Process(items)
+    b.Processor.WriteOutput(processed)
+}
+
+type UpperCaseProcessor struct{ BaseProcessor }
+func (u *UpperCaseProcessor) ReadInput() []string { return []string{"hello", "world"} }
+func (u *UpperCaseProcessor) Process(items []string) []string {
+    result := make([]string, len(items))
+    for i, s := range items {
+        result[i] = fmt.Sprintf("%s → UPPER", s)
+    }
+    return result
+}
+func (u *UpperCaseProcessor) WriteOutput(items []string) {
+    for _, item := range items { fmt.Println(item) }
+}
+```

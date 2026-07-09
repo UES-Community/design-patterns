@@ -1,0 +1,78 @@
+---
+title: "proxy en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Proxy de caché con TTL
+interface DataService {
+  fetchUser(id: string): Promise<{ id: string; name: string; email: string }>
+  fetchPosts(userId: string): Promise<Array<{ id: string; title: string }>>
+}
+
+class RealDataService implements DataService {
+  async fetchUser(id: string) {
+    console.log(`[DB] Fetching user ${id}...`)
+    await new Promise(r => setTimeout(r, 100)) // simula latencia
+    return { id, name: `User ${id}`, email: `user${id}@example.com` }
+  }
+
+  async fetchPosts(userId: string) {
+    console.log(`[DB] Fetching posts for ${userId}...`)
+    await new Promise(r => setTimeout(r, 150))
+    return [{ id: '1', title: 'Post 1' }, { id: '2', title: 'Post 2' }]
+  }
+}
+
+interface CacheEntry<T> {
+  value: T
+  expiresAt: number
+}
+
+class CachingProxy implements DataService {
+  private cache = new Map<string, CacheEntry<unknown>>()
+
+  constructor(
+    private real: DataService,
+    private ttlMs = 60_000,
+  ) {}
+
+  private getFromCache<T>(key: string): T | null {
+    const entry = this.cache.get(key)
+    if (!entry) return null
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(key)
+      return null
+    }
+    console.log(`[CACHE HIT] ${key}`)
+    return entry.value as T
+  }
+
+  private setCache<T>(key: string, value: T): void {
+    this.cache.set(key, { value, expiresAt: Date.now() + this.ttlMs })
+  }
+
+  async fetchUser(id: string) {
+    const key = `user:${id}`
+    const cached = this.getFromCache<Awaited<ReturnType<DataService['fetchUser']>>>(key)
+    if (cached) return cached
+    const result = await this.real.fetchUser(id)
+    this.setCache(key, result)
+    return result
+  }
+
+  async fetchPosts(userId: string) {
+    const key = `posts:${userId}`
+    const cached = this.getFromCache<Awaited<ReturnType<DataService['fetchPosts']>>>(key)
+    if (cached) return cached
+    const result = await this.real.fetchPosts(userId)
+    this.setCache(key, result)
+    return result
+  }
+}
+
+// Uso
+const service = new CachingProxy(new RealDataService())
+await service.fetchUser('42')   // [DB] consulta real
+await service.fetchUser('42')   // [CACHE HIT]
+```

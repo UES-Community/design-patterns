@@ -1,0 +1,68 @@
+---
+title: Singleton
+category: creacional
+difficulty: principiante
+description: Garantiza que una clase tenga una única instancia y proporciona un punto de acceso global a ella.
+also_known_as: ["Instance Unique"]
+tags: ["instancia", "global", "acceso único"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El patrón **Singleton** restringe la instanciación de una clase a un único objeto. Es útil cuando exactamente un objeto debe coordinar acciones a través del sistema: configuración global, loggers, pools de conexión a base de datos.
+
+## Causa
+
+Necesitas asegurarte de que una clase solo tenga **una instancia** y que esa instancia sea fácilmente accesible desde cualquier parte del código. Crear instancias múltiples podría causar comportamientos inconsistentes o duplicar recursos costosos.
+
+## Aplicación
+
+1. Hacer el constructor **privado** para prevenir instanciación directa.
+2. Crear un método estático que actúe como constructor y almacene la instancia en un campo estático.
+3. En llamadas subsecuentes, devolver la instancia ya existente.
+
+## Estructura
+
+```
+Singleton
+├── -instance: Singleton  (estático, privado)
+├── -Singleton()           (constructor privado)
+└── +getInstance(): Singleton  (estático, público)
+```
+
+### Cuándo usar
+
+- Cuando necesitas exactamente una instancia de una clase que sea accesible globalmente.
+- Cuando la instancia debe ser extensible por subclases y los clientes deben poder usar la instancia extendida sin modificar su código.
+
+> **Advertencia:** El Singleton es considerado un antipatrón en muchos contextos modernos porque introduce acoplamiento global y dificulta el testing. Considera usar **Inyección de Dependencias** como alternativa.
+
+- Logger de aplicación
+- Pool de conexiones a base de datos
+- Caché de configuración
+- Gestor de archivos del sistema operativo
+
+
+
+
+
+
+
+
+
+## Ventajas y desventajas
+
+| | Descripción |
+|---|---|
+| **Ventaja** | Garantía de instancia única |
+| **Ventaja** | Punto de acceso global bien definido |
+| **Ventaja** | Inicialización lazy (solo cuando se necesita) |
+| **Desventaja** | Viola el Principio de Responsabilidad Única |
+| **Desventaja** | Dificulta el unit testing |
+| **Desventaja** | Requiere tratamiento especial en entornos multi-hilo |
+
+## Patrones relacionados
+
+- **Abstract Factory**, **Builder**, **Prototype** — pueden implementarse como Singleton
+- **Facade** — frecuentemente se implementa como Singleton

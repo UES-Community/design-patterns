@@ -1,0 +1,66 @@
+---
+title: "adapter en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Adaptar distintas APIs de geolocalización
+interface GeoLocation {
+  getCoordinates(address: string): Promise<{ lat: number; lng: number }>
+}
+
+// API de Google Maps (externa — no podemos modificarla)
+class GoogleMapsAPI {
+  async geocode(addr: string): Promise<{ latitude: number; longitude: number }> {
+    return { latitude: 40.7128, longitude: -74.006 }
+  }
+}
+
+// API de OpenStreetMap (externa — no podemos modificarla)
+class OpenStreetMapAPI {
+  async search(query: string): Promise<{ coord: { lat: string; lon: string } }> {
+    return { coord: { lat: '40.7128', lon: '-74.0060' } }
+  }
+}
+
+// Adapter para Google Maps
+class GoogleMapsAdapter implements GeoLocation {
+  constructor(private api: GoogleMapsAPI) {}
+
+  async getCoordinates(address: string): Promise<{ lat: number; lng: number }> {
+    const result = await this.api.geocode(address)
+    return { lat: result.latitude, lng: result.longitude }
+  }
+}
+
+// Adapter para OpenStreetMap
+class OSMAdapter implements GeoLocation {
+  constructor(private api: OpenStreetMapAPI) {}
+
+  async getCoordinates(address: string): Promise<{ lat: number; lng: number }> {
+    const result = await this.api.search(address)
+    return {
+      lat: parseFloat(result.coord.lat),
+      lng: parseFloat(result.coord.lon),
+    }
+  }
+}
+
+// Servicio que usa la interfaz unificada
+class LocationService {
+  constructor(private geo: GeoLocation) {}
+
+  async findAddress(address: string): Promise<string> {
+    const { lat, lng } = await this.geo.getCoordinates(address)
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  }
+}
+
+// Uso — intercambiable sin cambiar LocationService
+const googleService = new LocationService(
+  new GoogleMapsAdapter(new GoogleMapsAPI())
+)
+const osmService = new LocationService(
+  new OSMAdapter(new OpenStreetMapAPI())
+)
+```

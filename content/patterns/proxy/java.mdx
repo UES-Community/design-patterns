@@ -1,0 +1,25 @@
+---
+title: "proxy en java"
+language: "java"
+---
+
+```java
+// Java — Proxy dinámico para logging
+import java.lang.reflect.*;
+
+public class LoggingProxy {
+    @SuppressWarnings("unchecked")
+    public static <T> T create(T target, Class<T> iface) {
+        return (T) Proxy.newProxyInstance(
+            iface.getClassLoader(),
+            new Class[]{iface},
+            (proxy, method, args) -> {
+                System.out.println("--> " + method.getName());
+                Object result = method.invoke(target, args);
+                System.out.println("<-- " + method.getName());
+                return result;
+            }
+        );
+    }
+}
+```

@@ -1,0 +1,39 @@
+---
+title: "factory-method en java"
+language: "java"
+---
+
+```java
+// Java — Parsers de distintos formatos
+public interface Parser {
+    Object parse(String input);
+}
+
+public class JSONParser implements Parser {
+    public Object parse(String input) {
+        return "Parsed JSON: " + input;
+    }
+}
+
+public class XMLParser implements Parser {
+    public Object parse(String input) {
+        return "Parsed XML: " + input;
+    }
+}
+
+public abstract class DataProcessor {
+    protected abstract Parser createParser();
+
+    public void process(String data) {
+        Parser parser = createParser();
+        Object result = parser.parse(data);
+        System.out.println(result);
+    }
+}
+
+public class JSONProcessor extends DataProcessor {
+    protected Parser createParser() {
+        return new JSONParser();
+    }
+}
+```

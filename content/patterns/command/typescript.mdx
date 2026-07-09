@@ -1,0 +1,115 @@
+---
+title: "command en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Editor de texto con undo/redo
+interface Command {
+  execute(): void
+  undo(): void
+  description: string
+}
+
+class TextEditor {
+  private content = ''
+  private cursor = 0
+
+  insert(text: string, position: number): void {
+    this.content = this.content.slice(0, position) + text + this.content.slice(position)
+    this.cursor = position + text.length
+  }
+
+  delete(start: number, length: number): void {
+    this.content = this.content.slice(0, start) + this.content.slice(start + length)
+    this.cursor = start
+  }
+
+  getContent(): string { return this.content }
+  getCursor(): number { return this.cursor }
+}
+
+class InsertCommand implements Command {
+  description: string
+
+  constructor(
+    private editor: TextEditor,
+    private text: string,
+    private position: number,
+  ) {
+    this.description = `Insert "${text}" at ${position}`
+  }
+
+  execute(): void {
+    this.editor.insert(this.text, this.position)
+  }
+
+  undo(): void {
+    this.editor.delete(this.position, this.text.length)
+  }
+}
+
+class DeleteCommand implements Command {
+  private deletedText = ''
+  description: string
+
+  constructor(
+    private editor: TextEditor,
+    private start: number,
+    private length: number,
+  ) {
+    this.description = `Delete ${length} chars at ${start}`
+  }
+
+  execute(): void {
+    this.deletedText = this.editor.getContent().slice(this.start, this.start + this.length)
+    this.editor.delete(this.start, this.length)
+  }
+
+  undo(): void {
+    this.editor.insert(this.deletedText, this.start)
+  }
+}
+
+class CommandHistory {
+  private history: Command[] = []
+  private redoStack: Command[] = []
+
+  execute(command: Command): void {
+    command.execute()
+    this.history.push(command)
+    this.redoStack = []
+    console.log(`Executed: ${command.description}`)
+  }
+
+  undo(): void {
+    const command = this.history.pop()
+    if (!command) return
+    command.undo()
+    this.redoStack.push(command)
+    console.log(`Undone: ${command.description}`)
+  }
+
+  redo(): void {
+    const command = this.redoStack.pop()
+    if (!command) return
+    command.execute()
+    this.history.push(command)
+    console.log(`Redone: ${command.description}`)
+  }
+}
+
+// Uso
+const editor = new TextEditor()
+const history = new CommandHistory()
+
+history.execute(new InsertCommand(editor, 'Hello', 0))
+history.execute(new InsertCommand(editor, ' World', 5))
+console.log(editor.getContent()) // "Hello World"
+
+history.undo()
+console.log(editor.getContent()) // "Hello"
+
+history.redo()
+console.log(editor.getContent()) // "Hello World"
+```

@@ -1,0 +1,46 @@
+---
+title: "strategy en go"
+language: "go"
+---
+
+```go
+// Go — Compresión de datos con distintas estrategias
+package strategy
+
+import "fmt"
+
+type Compressor interface {
+    Compress(data []byte) ([]byte, error)
+    Decompress(data []byte) ([]byte, error)
+    Name() string
+}
+
+type GzipCompressor struct{}
+func (g *GzipCompressor) Name() string { return "gzip" }
+func (g *GzipCompressor) Compress(data []byte) ([]byte, error) {
+    return append([]byte("[gzip]"), data...), nil
+}
+func (g *GzipCompressor) Decompress(data []byte) ([]byte, error) {
+    return data[6:], nil
+}
+
+type ZstdCompressor struct{}
+func (z *ZstdCompressor) Name() string { return "zstd" }
+func (z *ZstdCompressor) Compress(data []byte) ([]byte, error) {
+    return append([]byte("[zstd]"), data...), nil
+}
+func (z *ZstdCompressor) Decompress(data []byte) ([]byte, error) {
+    return data[6:], nil
+}
+
+type FileProcessor struct {
+    strategy Compressor
+}
+
+func (f *FileProcessor) SetStrategy(s Compressor) { f.strategy = s }
+
+func (f *FileProcessor) Process(data []byte) ([]byte, error) {
+    fmt.Printf("Compressing with %s\n", f.strategy.Name())
+    return f.strategy.Compress(data)
+}
+```

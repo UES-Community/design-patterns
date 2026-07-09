@@ -1,0 +1,37 @@
+---
+title: "strategy en java"
+language: "java"
+---
+
+```java
+// Java — Validaciones de formulario
+import java.util.function.Predicate;
+
+public class FormValidator {
+    private Predicate<String> strategy;
+    private String fieldName;
+
+    public FormValidator(String fieldName, Predicate<String> strategy) {
+        this.fieldName = fieldName;
+        this.strategy = strategy;
+    }
+
+    public void setStrategy(Predicate<String> strategy) {
+        this.strategy = strategy;
+    }
+
+    public boolean validate(String value) {
+        return strategy.test(value);
+    }
+}
+
+// Estrategias como lambdas
+var emailValidator = new FormValidator("email",
+    v -> v.matches("^[^@]+@[^@]+\\.[^@]+$"));
+
+var passwordValidator = new FormValidator("password",
+    v -> v.length() >= 8 && v.matches(".*[A-Z].*") && v.matches(".*[0-9].*"));
+
+System.out.println(emailValidator.validate("user@example.com")); // true
+System.out.println(passwordValidator.validate("Passw0rd"));      // true
+```

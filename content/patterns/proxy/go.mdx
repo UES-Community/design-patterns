@@ -1,0 +1,40 @@
+---
+title: "proxy en go"
+language: "go"
+---
+
+```go
+// Go — Lazy loading proxy
+package proxy
+
+import "sync"
+
+type Image interface {
+    Display() string
+    Size() int64
+}
+
+type HighResImage struct {
+    filename string
+    data     []byte
+}
+
+func (h *HighResImage) Display() string { return "Displaying " + h.filename }
+func (h *HighResImage) Size() int64     { return int64(len(h.data)) }
+
+type LazyImage struct {
+    filename string
+    real     *HighResImage
+    once     sync.Once
+}
+
+func (l *LazyImage) load() {
+    l.once.Do(func() {
+        println("Loading image: " + l.filename)
+        l.real = &HighResImage{filename: l.filename, data: make([]byte, 1024)}
+    })
+}
+
+func (l *LazyImage) Display() string { l.load(); return l.real.Display() }
+func (l *LazyImage) Size() int64     { l.load(); return l.real.Size() }
+```

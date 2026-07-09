@@ -110,7 +110,7 @@ export default async function PatternPage({ params }: Props) {
         <div className="h-px bg-gradient-to-r from-[var(--color-border)] to-transparent mb-8 md:mb-10" />
 
         {/* MDX Content with language switcher */}
-        <PatternContent slug={slug} rawContent={pattern.content} />
+        <PatternContent slug={slug} rawContent={pattern.content} languages={pattern.languages} />
 
         {/* Tags */}
         {pattern.tags.length > 0 && (

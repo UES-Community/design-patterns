@@ -1,0 +1,73 @@
+---
+title: "composite en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Sistema de archivos
+abstract class FileSystemItem {
+  constructor(protected name: string) {}
+
+  abstract getSize(): number
+  abstract render(indent?: number): string
+
+  getName(): string {
+    return this.name
+  }
+}
+
+class File extends FileSystemItem {
+  constructor(name: string, private size: number) {
+    super(name)
+  }
+
+  getSize(): number {
+    return this.size
+  }
+
+  render(indent = 0): string {
+    return `${'  '.repeat(indent)}📄 ${this.name} (${this.size}B)`
+  }
+}
+
+class Directory extends FileSystemItem {
+  private children: FileSystemItem[] = []
+
+  add(item: FileSystemItem): this {
+    this.children.push(item)
+    return this
+  }
+
+  remove(item: FileSystemItem): void {
+    this.children = this.children.filter(c => c !== item)
+  }
+
+  getSize(): number {
+    return this.children.reduce((total, child) => total + child.getSize(), 0)
+  }
+
+  render(indent = 0): string {
+    const lines = [`${'  '.repeat(indent)}📁 ${this.name}/`]
+    this.children.forEach(child => lines.push(child.render(indent + 1)))
+    return lines.join('\n')
+  }
+}
+
+// Uso
+const root = new Directory('project')
+  .add(new File('package.json', 512))
+  .add(new File('README.md', 2048))
+  .add(
+    new Directory('src')
+      .add(new File('index.ts', 1024))
+      .add(new File('utils.ts', 768))
+      .add(
+        new Directory('components')
+          .add(new File('Button.tsx', 384))
+          .add(new File('Card.tsx', 512))
+      )
+  )
+
+console.log(root.render())
+console.log(`Total size: ${root.getSize()} bytes`)
+```

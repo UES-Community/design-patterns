@@ -1,0 +1,33 @@
+---
+title: "observer en java"
+language: "java"
+---
+
+```java
+// Java — Observer con generics
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+public class EventEmitter<T> {
+    private final List<Consumer<T>> listeners = new ArrayList<>();
+
+    public void subscribe(Consumer<T> listener) {
+        listeners.add(listener);
+    }
+
+    public void unsubscribe(Consumer<T> listener) {
+        listeners.remove(listener);
+    }
+
+    public void emit(T event) {
+        listeners.forEach(listener -> listener.accept(event));
+    }
+}
+
+// Uso
+EventEmitter<String> emitter = new EventEmitter<>();
+emitter.subscribe(msg -> System.out.println("Handler A: " + msg));
+emitter.subscribe(msg -> System.out.println("Handler B: " + msg));
+emitter.emit("Hello Observers!");
+```

@@ -1,0 +1,43 @@
+---
+title: Decorator
+category: estructural
+difficulty: intermedio
+description: Adjunta responsabilidades adicionales a un objeto de forma dinámica. Los decoradores proporcionan una alternativa flexible a la herencia para extender funcionalidad.
+also_known_as: ["Wrapper"]
+tags: ["extensión", "wrapper", "responsabilidad"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Decorator** permite agregar comportamientos a objetos individuales, sin afectar el comportamiento de otros objetos de la misma clase. Se logra envolviendo el objeto original en un objeto decorador que contiene el comportamiento adicional.
+
+## Causa
+
+La herencia es estática: no puedes alterar el comportamiento de una clase existente en tiempo de ejecución. Además, si necesitas combinar N características, necesitarías 2^N subclases.
+
+## Aplicación
+
+1. Asegúrate de que el componente base y los decoradores implementen la **misma interfaz**.
+2. El decorador contiene una **referencia** al componente que envuelve (composición).
+3. El decorador delega el trabajo al componente envuelto y puede añadir su propio comportamiento antes o después.
+
+### Cuándo usar
+
+- Cuando quieres añadir responsabilidades a objetos individuales de forma dinámica y transparente.
+- Cuando la extensión por herencia no es práctica (demasiadas combinaciones posibles).
+- Para aplicar responsabilidades que pueden ser retiradas posteriormente.
+
+
+
+
+
+
+
+
+
+## Patrones relacionados
+
+- **Composite** — comparte la estructura de árbol, pero su propósito es diferente
+- **Strategy** — cambia el interior del objeto; Decorator cambia su piel
+- **Chain of Responsibility** — el handler puede pasarse a sí mismo como parte del procesamiento

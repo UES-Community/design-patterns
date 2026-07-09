@@ -1,0 +1,69 @@
+---
+title: "proxy en python"
+language: "python"
+---
+
+```python
+# Python — Protection Proxy con RBAC
+from abc import ABC, abstractmethod
+from enum import Enum
+from functools import wraps
+
+class Role(Enum):
+    GUEST = 'guest'
+    USER = 'user'
+    ADMIN = 'admin'
+
+class FileSystem(ABC):
+    @abstractmethod
+    def read(self, path: str) -> str: ...
+
+    @abstractmethod
+    def write(self, path: str, content: str) -> None: ...
+
+    @abstractmethod
+    def delete(self, path: str) -> None: ...
+
+class RealFileSystem(FileSystem):
+    def read(self, path: str) -> str:
+        return f'Content of {path}'
+
+    def write(self, path: str, content: str) -> None:
+        print(f'Writing to {path}')
+
+    def delete(self, path: str) -> None:
+        print(f'Deleting {path}')
+
+class ProtectedFileSystem(FileSystem):
+    PERMISSIONS = {
+        Role.GUEST: {'read'},
+        Role.USER:  {'read', 'write'},
+        Role.ADMIN: {'read', 'write', 'delete'},
+    }
+
+    def __init__(self, real: RealFileSystem, role: Role):
+        self._real = real
+        self._role = role
+
+    def _check(self, operation: str) -> None:
+        if operation not in self.PERMISSIONS.get(self._role, set()):
+            raise PermissionError(f'{self._role.value} cannot {operation}')
+
+    def read(self, path: str) -> str:
+        self._check('read')
+        return self._real.read(path)
+
+    def write(self, path: str, content: str) -> None:
+        self._check('write')
+        self._real.write(path, content)
+
+    def delete(self, path: str) -> None:
+        self._check('delete')
+        self._real.delete(path)
+
+# Uso
+fs = ProtectedFileSystem(RealFileSystem(), Role.USER)
+print(fs.read('/etc/config'))   # OK
+fs.write('/tmp/data', 'hello')  # OK
+fs.delete('/important')         # PermissionError
+```

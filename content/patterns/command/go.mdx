@@ -1,0 +1,45 @@
+---
+title: "command en go"
+language: "go"
+---
+
+```go
+// Go — Task queue con comandos serializables
+package command
+
+type Command interface {
+    Execute() error
+    Undo() error
+    Name() string
+}
+
+type Queue struct {
+    commands []Command
+    executed []Command
+}
+
+func (q *Queue) Enqueue(cmd Command) {
+    q.commands = append(q.commands, cmd)
+}
+
+func (q *Queue) Run() error {
+    for len(q.commands) > 0 {
+        cmd := q.commands[0]
+        q.commands = q.commands[1:]
+        if err := cmd.Execute(); err != nil {
+            return err
+        }
+        q.executed = append(q.executed, cmd)
+    }
+    return nil
+}
+
+func (q *Queue) UndoLast() error {
+    if len(q.executed) == 0 {
+        return nil
+    }
+    last := q.executed[len(q.executed)-1]
+    q.executed = q.executed[:len(q.executed)-1]
+    return last.Undo()
+}
+```

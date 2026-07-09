@@ -1,0 +1,23 @@
+---
+title: Builder
+category: creacional
+difficulty: intermedio
+description: Separa la construcción de un objeto complejo de su representación, permitiendo el mismo proceso de construcción crear distintas representaciones.
+also_known_as: []
+tags: ["construcción", "fluent", "inmutabilidad"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Builder** construye objetos complejos paso a paso. El patrón permite producir diferentes tipos y representaciones de un objeto usando el mismo código de construcción.
+
+## Causa
+
+Imagina un objeto `House` con muchos campos opcionales: garage, piscina, jardín, número de pisos, etc. Un constructor con todos esos parámetros sería ilegible. El Builder soluciona esto.
+
+### Cuándo usar
+
+- Cuando la construcción de un objeto involucra muchos pasos opcionales.
+- Cuando necesitas crear diferentes representaciones del mismo producto.
+- Cuando el proceso de construcción debe ser independiente de las partes del objeto final.

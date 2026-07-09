@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getPatternBySlug, getAllPatternSlugLangs, getAllPatterns } from '@/lib/patterns'
+import { getPatternBySlug, getAllPatternSlugLangs, getAllPatterns, getPatternLanguageContent } from '@/lib/patterns'
 import { CATEGORY_META, DIFFICULTY_LABEL, LANGUAGE_LABELS } from '@/lib/types'
 import { MainLayout } from '@/components/main-layout'
 import { PatternContent } from '@/components/pattern-content'
@@ -33,6 +33,8 @@ export default async function PatternLangPage({ params }: Props) {
   if (!pattern || !pattern.languages.includes(lang)) {
     notFound()
   }
+
+  const langContent = getPatternLanguageContent(slug, lang) ?? ''
 
   const allPatterns = await getAllPatterns()
   const catMeta = CATEGORY_META[pattern.category]
@@ -133,7 +135,7 @@ export default async function PatternLangPage({ params }: Props) {
         <div className="h-px bg-gradient-to-r from-[var(--color-border)] to-transparent mb-8 md:mb-10" />
 
         {/* MDX Content with language switcher */}
-        <PatternContent slug={slug} rawContent={pattern.content} activeLanguage={lang} />
+        <PatternContent slug={slug} rawContent={pattern.content} languages={pattern.languages} activeLanguage={lang} langContent={langContent} />
 
         {/* Tags */}
         {pattern.tags.length > 0 && (

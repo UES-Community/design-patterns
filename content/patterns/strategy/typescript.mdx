@@ -1,0 +1,67 @@
+---
+title: "strategy en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Sistema de ordenamiento con múltiples estrategias
+interface SortStrategy<T> {
+  sort(data: T[]): T[]
+  name: string
+}
+
+class BubbleSortStrategy<T> implements SortStrategy<T> {
+  name = 'Bubble Sort'
+
+  sort(data: T[]): T[] {
+    const arr = [...data]
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length - i - 1; j++) {
+        if (arr[j] > arr[j + 1]) {
+          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+        }
+      }
+    }
+    return arr
+  }
+}
+
+class QuickSortStrategy<T> implements SortStrategy<T> {
+  name = 'Quick Sort'
+
+  sort(data: T[]): T[] {
+    if (data.length <= 1) return data
+    const pivot = data[Math.floor(data.length / 2)]
+    const left = data.filter(x => x < pivot)
+    const middle = data.filter(x => x === pivot)
+    const right = data.filter(x => x > pivot)
+    return [...this.sort(left), ...middle, ...this.sort(right)]
+  }
+}
+
+class DataSorter<T> {
+  private strategy: SortStrategy<T>
+
+  constructor(strategy: SortStrategy<T>) {
+    this.strategy = strategy
+  }
+
+  setStrategy(strategy: SortStrategy<T>): void {
+    this.strategy = strategy
+  }
+
+  sort(data: T[]): { result: T[]; strategyUsed: string } {
+    return {
+      result: this.strategy.sort(data),
+      strategyUsed: this.strategy.name,
+    }
+  }
+}
+
+// Uso
+const sorter = new DataSorter(new BubbleSortStrategy<number>())
+console.log(sorter.sort([5, 2, 8, 1, 9]))
+
+sorter.setStrategy(new QuickSortStrategy<number>())
+console.log(sorter.sort([5, 2, 8, 1, 9]))
+```

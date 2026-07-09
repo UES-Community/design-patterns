@@ -1,0 +1,40 @@
+---
+title: "template-method en java"
+language: "java"
+---
+
+```java
+// Java — Game loop con Template Method
+public abstract class GameEngine {
+    // Template method
+    public final void run() {
+        initialize();
+        while (!isDone()) {
+            processInput();
+            update();
+            render();
+        }
+        cleanup();
+    }
+
+    protected abstract void initialize();
+    protected abstract void processInput();
+    protected abstract void update();
+    protected abstract void render();
+    protected abstract boolean isDone();
+
+    protected void cleanup() {
+        System.out.println("Game over.");
+    }
+}
+
+public class PongGame extends GameEngine {
+    private int tick = 0;
+
+    protected void initialize() { System.out.println("Pong started!"); }
+    protected void processInput() { /* lee teclado */ }
+    protected void update() { tick++; }
+    protected void render() { System.out.println("Render frame " + tick); }
+    protected boolean isDone() { return tick >= 3; }
+}
+```

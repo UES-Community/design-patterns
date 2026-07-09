@@ -1,0 +1,77 @@
+---
+title: "builder en python"
+language: "python"
+---
+
+```python
+# Python — Builder de configuración de servidor
+from dataclasses import dataclass, field
+from typing import Optional
+
+@dataclass
+class ServerConfig:
+    host: str
+    port: int
+    max_connections: int
+    timeout_seconds: int
+    tls_enabled: bool
+    allowed_origins: list[str]
+    debug: bool
+
+class ServerConfigBuilder:
+    def __init__(self):
+        self._host = 'localhost'
+        self._port = 8080
+        self._max_connections = 100
+        self._timeout = 30
+        self._tls = False
+        self._origins: list[str] = ['*']
+        self._debug = False
+
+    def host(self, host: str) -> 'ServerConfigBuilder':
+        self._host = host
+        return self
+
+    def port(self, port: int) -> 'ServerConfigBuilder':
+        if not 1 <= port <= 65535:
+            raise ValueError(f'Invalid port: {port}')
+        self._port = port
+        return self
+
+    def max_connections(self, n: int) -> 'ServerConfigBuilder':
+        self._max_connections = n
+        return self
+
+    def with_tls(self) -> 'ServerConfigBuilder':
+        self._tls = True
+        return self
+
+    def allow_origins(self, *origins: str) -> 'ServerConfigBuilder':
+        self._origins = list(origins)
+        return self
+
+    def debug(self) -> 'ServerConfigBuilder':
+        self._debug = True
+        return self
+
+    def build(self) -> ServerConfig:
+        return ServerConfig(
+            host=self._host,
+            port=self._port,
+            max_connections=self._max_connections,
+            timeout_seconds=self._timeout,
+            tls_enabled=self._tls,
+            allowed_origins=self._origins,
+            debug=self._debug,
+        )
+
+config = (
+    ServerConfigBuilder()
+    .host('0.0.0.0')
+    .port(443)
+    .with_tls()
+    .allow_origins('https://app.example.com')
+    .max_connections(500)
+    .build()
+)
+```

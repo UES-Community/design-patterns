@@ -1,0 +1,34 @@
+---
+title: "singleton en go"
+language: "go"
+---
+
+```go
+// Go — usando sync.Once para thread-safety garantizada
+package singleton
+
+import "sync"
+
+type DatabaseConnection struct {
+    url             string
+    connectionCount int
+}
+
+var (
+    instance *DatabaseConnection
+    once     sync.Once
+)
+
+func GetInstance(url string) *DatabaseConnection {
+    once.Do(func() {
+        instance = &DatabaseConnection{url: url}
+        println("Connecting to " + url)
+    })
+    return instance
+}
+
+func (d *DatabaseConnection) Query(sql string) string {
+    d.connectionCount++
+    return fmt.Sprintf("[Query #%d] %s", d.connectionCount, sql)
+}
+```

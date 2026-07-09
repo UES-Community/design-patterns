@@ -1,0 +1,35 @@
+---
+title: "singleton en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Thread-safe con inicialización lazy
+class DatabaseConnection {
+  private static instance: DatabaseConnection | null = null
+  private connectionCount = 0
+
+  private constructor(private readonly url: string) {
+    console.log(`Connecting to ${url}`)
+  }
+
+  static getInstance(url = 'postgres://localhost/app'): DatabaseConnection {
+    if (!DatabaseConnection.instance) {
+      DatabaseConnection.instance = new DatabaseConnection(url)
+    }
+    return DatabaseConnection.instance
+  }
+
+  query(sql: string): string {
+    this.connectionCount++
+    return `[Query #${this.connectionCount}] ${sql}`
+  }
+}
+
+// Uso
+const db1 = DatabaseConnection.getInstance()
+const db2 = DatabaseConnection.getInstance()
+
+console.log(db1 === db2) // true — misma instancia
+console.log(db1.query('SELECT * FROM users'))
+```

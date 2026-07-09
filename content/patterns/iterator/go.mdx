@@ -1,0 +1,38 @@
+---
+title: "iterator en go"
+language: "go"
+---
+
+```go
+// Go — Iterador de archivos con filtro
+package iterator
+
+import (
+    "io/fs"
+    "path/filepath"
+)
+
+type FileIterator struct {
+    paths   []string
+    index   int
+    filter  func(string) bool
+}
+
+func NewFileIterator(root string, filter func(string) bool) (*FileIterator, error) {
+    var paths []string
+    err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+        if err != nil || d.IsDir() {
+            return err
+        }
+        if filter == nil || filter(path) {
+            paths = append(paths, path)
+        }
+        return nil
+    })
+    return &FileIterator{paths: paths, filter: filter}, err
+}
+
+func (f *FileIterator) HasNext() bool    { return f.index < len(f.paths) }
+func (f *FileIterator) Next() string     { path := f.paths[f.index]; f.index++; return path }
+func (f *FileIterator) Reset()           { f.index = 0 }
+```

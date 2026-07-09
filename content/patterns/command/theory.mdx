@@ -1,0 +1,38 @@
+---
+title: Command
+category: comportamiento
+difficulty: intermedio
+description: Encapsula una solicitud como un objeto, permitiendo parametrizar clientes con diferentes solicitudes, colas o logs, y soportar operaciones deshacer/rehacer.
+also_known_as: ["Action", "Transaction"]
+tags: ["undo/redo", "queue", "encapsulación"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Command** convierte una solicitud en un objeto independiente que contiene toda la información sobre esa solicitud. Esta transformación permite pasar solicitudes como argumentos, retrasarlas, ponerlas en cola, y soportar operaciones deshacer/rehacer.
+
+## Causa
+
+Tienes botones, atajos de teclado y opciones de menú que necesitan ejecutar las mismas operaciones. Además, necesitas historial de acciones para implementar Ctrl+Z.
+
+### Cuándo usar
+
+- Para implementar operaciones reversibles (undo/redo).
+- Para parametrizar objetos con operaciones.
+- Para implementar cambios diferidos o colas de operaciones.
+- Para implementar logging de operaciones para auditoría.
+
+
+
+
+
+
+
+
+
+## Patrones relacionados
+
+- **Chain of Responsibility** — pasa la solicitud por una cadena; Command encapsula la solicitud
+- **Memento** — puede usarse junto con Command para almacenar el estado antes de ejecutar
+- **Strategy** — similar, pero Strategy reemplaza parte del objeto; Command representa la solicitud completa

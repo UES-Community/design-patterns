@@ -1,0 +1,63 @@
+---
+title: "facade en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Facade para procesamiento de video
+class VideoDecoder {
+  decode(buffer: Buffer): ArrayBuffer {
+    console.log('Decoding video...')
+    return buffer.buffer
+  }
+}
+
+class AudioDecoder {
+  decode(buffer: Buffer): Float32Array {
+    console.log('Decoding audio...')
+    return new Float32Array(buffer.buffer)
+  }
+}
+
+class VideoEncoder {
+  encode(frames: ArrayBuffer, format: string): Buffer {
+    console.log(`Encoding to ${format}...`)
+    return Buffer.from(frames)
+  }
+}
+
+class AudioMixer {
+  mix(tracks: Float32Array[]): Float32Array {
+    console.log(`Mixing ${tracks.length} audio tracks...`)
+    return tracks[0]
+  }
+}
+
+class MetadataWriter {
+  write(output: Buffer, meta: Record<string, unknown>): Buffer {
+    console.log('Writing metadata...')
+    return output
+  }
+}
+
+// Facade
+class VideoConverter {
+  private decoder = new VideoDecoder()
+  private audioDecoder = new AudioDecoder()
+  private encoder = new VideoEncoder()
+  private mixer = new AudioMixer()
+  private metaWriter = new MetadataWriter()
+
+  convert(input: Buffer, format: 'mp4' | 'webm', meta?: Record<string, unknown>): Buffer {
+    const videoFrames = this.decoder.decode(input)
+    const audioTrack = this.audioDecoder.decode(input)
+    const mixedAudio = this.mixer.mix([audioTrack])
+    const encoded = this.encoder.encode(videoFrames, format)
+    return meta ? this.metaWriter.write(encoded, meta) : encoded
+  }
+}
+
+// Uso — una sola llamada en lugar de coordinar 5 subsistemas
+const converter = new VideoConverter()
+converter.convert(Buffer.alloc(0), 'mp4', { title: 'My Video' })
+```

@@ -1,0 +1,37 @@
+---
+title: Adapter
+category: estructural
+difficulty: principiante
+description: Permite que objetos con interfaces incompatibles trabajen juntos, actuando como un traductor entre ellos.
+also_known_as: ["Wrapper"]
+tags: ["interfaz", "compatibilidad", "integración"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Adapter** convierte la interfaz de una clase en otra que los clientes esperan. Permite que clases con interfaces incompatibles trabajen juntas, como un adaptador de corriente que permite a un enchufe europeo funcionar en una toma americana.
+
+## Causa
+
+Tienes código existente que funciona bien, y una nueva librería de terceros que hace exactamente lo que necesitas, pero sus interfaces son incompatibles. No puedes modificar ninguno de los dos.
+
+### Cuándo usar
+
+- Cuando quieres usar una clase existente pero su interfaz no coincide con la que necesitas.
+- Cuando quieres crear una clase reutilizable que coopere con clases no relacionadas o imprevisibles.
+- Para integrar librerías de terceros sin acoplar tu código a ellas.
+
+
+
+
+
+
+
+
+
+## Patrones relacionados
+
+- **Bridge** — similar pero separa la abstracción de la implementación desde el diseño inicial
+- **Decorator** — también envuelve un objeto, pero añade responsabilidades en lugar de adaptar la interfaz
+- **Facade** — proporciona una interfaz simplificada a un subsistema complejo

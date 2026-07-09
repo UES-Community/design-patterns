@@ -1,0 +1,32 @@
+---
+title: "adapter en java"
+language: "java"
+---
+
+```java
+// Java — Adapter para APIs de pagos
+public interface PaymentGateway {
+    PaymentResult charge(String customerId, long amountCents, String currency);
+}
+
+// Stripe SDK (no modificable)
+public class StripeClient {
+    public StripeCharge createCharge(StripeChargeParams params) {
+        return new StripeCharge("ch_" + System.currentTimeMillis(), "succeeded");
+    }
+}
+
+public class StripeAdapter implements PaymentGateway {
+    private final StripeClient client;
+
+    public StripeAdapter(StripeClient client) {
+        this.client = client;
+    }
+
+    public PaymentResult charge(String customerId, long amountCents, String currency) {
+        var params = new StripeChargeParams(customerId, amountCents, currency);
+        var charge = client.createCharge(params);
+        return new PaymentResult(charge.getId(), "success");
+    }
+}
+```

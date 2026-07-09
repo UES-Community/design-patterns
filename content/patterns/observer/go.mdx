@@ -1,0 +1,35 @@
+---
+title: "observer en go"
+language: "go"
+---
+
+```go
+// Go — Event emitter genérico
+package observer
+
+import "sync"
+
+type Handler[T any] func(event T)
+
+type EventEmitter[T any] struct {
+    mu       sync.RWMutex
+    handlers []Handler[T]
+}
+
+func (e *EventEmitter[T]) On(handler Handler[T]) {
+    e.mu.Lock()
+    defer e.mu.Unlock()
+    e.handlers = append(e.handlers, handler)
+}
+
+func (e *EventEmitter[T]) Emit(event T) {
+    e.mu.RLock()
+    handlers := make([]Handler[T], len(e.handlers))
+    copy(handlers, e.handlers)
+    e.mu.RUnlock()
+
+    for _, h := range handlers {
+        go h(event)
+    }
+}
+```

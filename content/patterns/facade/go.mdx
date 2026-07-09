@@ -1,0 +1,37 @@
+---
+title: "facade en go"
+language: "go"
+---
+
+```go
+// Go — Facade para autenticación
+package facade
+
+type TokenService struct{}
+func (t *TokenService) Generate(userID string) string { return "jwt_token" }
+func (t *TokenService) Validate(token string) (string, error) { return "user_id", nil }
+
+type SessionStore struct{}
+func (s *SessionStore) Create(userID string) string { return "session_id" }
+func (s *SessionStore) Destroy(sessionID string) {}
+
+type AuditLogger struct{}
+func (a *AuditLogger) Log(event, userID string) {}
+
+type AuthFacade struct {
+    tokens   *TokenService
+    sessions *SessionStore
+    audit    *AuditLogger
+}
+
+func NewAuthFacade() *AuthFacade {
+    return &AuthFacade{&TokenService{}, &SessionStore{}, &AuditLogger{}}
+}
+
+func (a *AuthFacade) Login(userID string) (token, sessionID string) {
+    token = a.tokens.Generate(userID)
+    sessionID = a.sessions.Create(userID)
+    a.audit.Log("login", userID)
+    return
+}
+```

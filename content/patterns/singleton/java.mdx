@@ -1,0 +1,34 @@
+---
+title: "singleton en java"
+language: "java"
+---
+
+```java
+// Java — Double-Checked Locking para entornos multi-hilo
+public class DatabaseConnection {
+    private volatile static DatabaseConnection instance;
+    private final String url;
+    private int connectionCount = 0;
+
+    private DatabaseConnection(String url) {
+        this.url = url;
+        System.out.println("Connecting to " + url);
+    }
+
+    public static DatabaseConnection getInstance(String url) {
+        if (instance == null) {
+            synchronized (DatabaseConnection.class) {
+                if (instance == null) {
+                    instance = new DatabaseConnection(url);
+                }
+            }
+        }
+        return instance;
+    }
+
+    public String query(String sql) {
+        connectionCount++;
+        return "[Query #" + connectionCount + "] " + sql;
+    }
+}
+```

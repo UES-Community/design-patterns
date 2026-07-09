@@ -1,0 +1,82 @@
+---
+title: "factory-method en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Sistema de notificaciones con distintos canales
+interface Notification {
+  send(message: string): void
+  getType(): string
+}
+
+class EmailNotification implements Notification {
+  constructor(private readonly recipient: string) {}
+
+  send(message: string): void {
+    console.log(`EMAIL to ${this.recipient}: ${message}`)
+  }
+
+  getType(): string {
+    return 'email'
+  }
+}
+
+class SlackNotification implements Notification {
+  constructor(private readonly channel: string) {}
+
+  send(message: string): void {
+    console.log(`SLACK #${this.channel}: ${message}`)
+  }
+
+  getType(): string {
+    return 'slack'
+  }
+}
+
+class SMSNotification implements Notification {
+  constructor(private readonly phoneNumber: string) {}
+
+  send(message: string): void {
+    console.log(`SMS to ${this.phoneNumber}: ${message}`)
+  }
+
+  getType(): string {
+    return 'sms'
+  }
+}
+
+// Creador abstracto
+abstract class NotificationService {
+  abstract createNotification(): Notification
+
+  notify(message: string): void {
+    const notification = this.createNotification()
+    console.log(`[${notification.getType().toUpperCase()}] Sending notification...`)
+    notification.send(message)
+  }
+}
+
+// Creadores concretos
+class EmailService extends NotificationService {
+  constructor(private email: string) { super() }
+  createNotification(): Notification {
+    return new EmailNotification(this.email)
+  }
+}
+
+class SlackService extends NotificationService {
+  constructor(private channel: string) { super() }
+  createNotification(): Notification {
+    return new SlackNotification(this.channel)
+  }
+}
+
+// Uso
+const services: NotificationService[] = [
+  new EmailService('alice@example.com'),
+  new SlackService('alerts'),
+]
+
+services.forEach(s => s.notify('Deploy complete!'))
+```

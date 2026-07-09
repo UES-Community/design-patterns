@@ -1,0 +1,47 @@
+---
+title: "iterator en java"
+language: "java"
+---
+
+```java
+// Java — Iterador para colección personalizada
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class Range implements Iterable<Integer> {
+    private final int start;
+    private final int end;
+    private final int step;
+
+    public Range(int start, int end, int step) {
+        this.start = start;
+        this.end = end;
+        this.step = step;
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return new Iterator<>() {
+            private int current = start;
+
+            @Override
+            public boolean hasNext() {
+                return step > 0 ? current < end : current > end;
+            }
+
+            @Override
+            public Integer next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                int value = current;
+                current += step;
+                return value;
+            }
+        };
+    }
+}
+
+// Uso
+for (int i : new Range(0, 10, 2)) {
+    System.out.print(i + " "); // 0 2 4 6 8
+}
+```

@@ -16,8 +16,10 @@ export function getAllPatternSlugs(): string[] {
   try {
     return fs
       .readdirSync(CONTENT_DIR)
-      .filter((f) => f.endsWith('.mdx') || f.endsWith('.md'))
-      .map((f) => f.replace(/\.(mdx|md)$/, ''))
+      .filter((f) => {
+        const itemPath = path.join(CONTENT_DIR, f)
+        return fs.statSync(itemPath).isDirectory()
+      })
   } catch {
     return []
   }
@@ -25,18 +27,9 @@ export function getAllPatternSlugs(): string[] {
 
 export function getPatternBySlug(slug: string): Pattern | null {
   ensureContentDir()
-  const extensions = ['.mdx', '.md']
-  let filePath: string | null = null
+  const filePath = path.join(CONTENT_DIR, slug, 'theory.mdx')
 
-  for (const ext of extensions) {
-    const candidate = path.join(CONTENT_DIR, `${slug}${ext}`)
-    if (fs.existsSync(candidate)) {
-      filePath = candidate
-      break
-    }
-  }
-
-  if (!filePath) return null
+  if (!fs.existsSync(filePath)) return null
 
   const raw = fs.readFileSync(filePath, 'utf-8')
   const { data, content } = matter(raw)
@@ -52,6 +45,15 @@ export function getPatternBySlug(slug: string): Pattern | null {
     languages: data.languages ?? ['typescript'],
     content,
   }
+}
+
+export function getPatternLanguageContent(slug: string, lang: string): string | null {
+  ensureContentDir()
+  const filePath = path.join(CONTENT_DIR, slug, `${lang}.mdx`)
+  if (!fs.existsSync(filePath)) return null
+  const raw = fs.readFileSync(filePath, 'utf-8')
+  const { content } = matter(raw)
+  return content
 }
 
 export async function getAllPatterns(): Promise<PatternMeta[]> {

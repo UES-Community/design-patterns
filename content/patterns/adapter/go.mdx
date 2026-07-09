@@ -1,0 +1,45 @@
+---
+title: "adapter en go"
+language: "go"
+---
+
+```go
+// Go — Adapter para distintos sistemas de almacenamiento
+package adapter
+
+type Storage interface {
+    Get(key string) (string, error)
+    Set(key, value string) error
+    Delete(key string) error
+}
+
+// Sistema Redis legacy
+type RedisClient struct{}
+func (r *RedisClient) HGet(hash, field string) string  { return "redis_value" }
+func (r *RedisClient) HSet(hash, field, value string)  {}
+func (r *RedisClient) HDel(hash, field string)         {}
+
+// Adapter que convierte Redis a la interfaz Storage
+type RedisAdapter struct {
+    client *RedisClient
+    hash   string
+}
+
+func NewRedisAdapter(client *RedisClient, hash string) Storage {
+    return &RedisAdapter{client: client, hash: hash}
+}
+
+func (r *RedisAdapter) Get(key string) (string, error) {
+    return r.client.HGet(r.hash, key), nil
+}
+
+func (r *RedisAdapter) Set(key, value string) error {
+    r.client.HSet(r.hash, key, value)
+    return nil
+}
+
+func (r *RedisAdapter) Delete(key string) error {
+    r.client.HDel(r.hash, key)
+    return nil
+}
+```

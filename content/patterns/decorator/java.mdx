@@ -1,0 +1,32 @@
+---
+title: "decorator en java"
+language: "java"
+---
+
+```java
+// Java — Streams decorados
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+public class TextProcessor {
+    private UnaryOperator<String> pipeline = UnaryOperator.identity();
+
+    public TextProcessor addStep(UnaryOperator<String> step) {
+        pipeline = pipeline.andThen(step)::apply;
+        return this;
+    }
+
+    public String process(String input) {
+        return pipeline.apply(input);
+    }
+}
+
+// Uso
+var processor = new TextProcessor()
+    .addStep(String::trim)
+    .addStep(String::toLowerCase)
+    .addStep(s -> s.replaceAll("\\s+", "-"))
+    .addStep(s -> "slug: " + s);
+
+System.out.println(processor.process("  Hello World  ")); // slug: hello-world
+```

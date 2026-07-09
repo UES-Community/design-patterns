@@ -1,0 +1,63 @@
+---
+title: "command en python"
+language: "python"
+---
+
+```python
+# Python — Sistema de transacciones bancarias
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class Account:
+    id: str
+    balance: float = 0.0
+
+    def deposit(self, amount: float) -> None:
+        self.balance += amount
+
+    def withdraw(self, amount: float) -> None:
+        if amount > self.balance:
+            raise ValueError(f'Insufficient funds: {self.balance}')
+        self.balance -= amount
+
+class BankCommand(ABC):
+    @abstractmethod
+    def execute(self) -> None: ...
+
+    @abstractmethod
+    def undo(self) -> None: ...
+
+class DepositCommand(BankCommand):
+    def __init__(self, account: Account, amount: float):
+        self.account = account
+        self.amount = amount
+
+    def execute(self) -> None:
+        self.account.deposit(self.amount)
+        print(f'Deposited ${self.amount} → Balance: ${self.account.balance}')
+
+    def undo(self) -> None:
+        self.account.withdraw(self.amount)
+        print(f'Reversed deposit of ${self.amount}')
+
+class TransactionManager:
+    def __init__(self):
+        self._history: list[BankCommand] = []
+
+    def execute(self, command: BankCommand) -> None:
+        command.execute()
+        self._history.append(command)
+
+    def rollback_last(self) -> None:
+        if self._history:
+            self._history.pop().undo()
+
+# Uso
+account = Account('ACC-001', 1000.0)
+manager = TransactionManager()
+manager.execute(DepositCommand(account, 500.0))
+manager.rollback_last()
+print(f'Final balance: ${account.balance}')
+```

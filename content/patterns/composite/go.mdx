@@ -1,0 +1,44 @@
+---
+title: "composite en go"
+language: "go"
+---
+
+```go
+// Go — Menu jerárquico
+package composite
+
+import "fmt"
+
+type MenuItem interface {
+    Render(depth int)
+    Name() string
+}
+
+type LeafItem struct {
+    name   string
+    action func()
+}
+
+func (l *LeafItem) Name() string         { return l.name }
+func (l *LeafItem) Render(depth int)     { fmt.Printf("%s- %s\n", indent(depth), l.name) }
+
+type Menu struct {
+    name     string
+    children []MenuItem
+}
+
+func (m *Menu) Name() string { return m.name }
+func (m *Menu) Add(item MenuItem) { m.children = append(m.children, item) }
+func (m *Menu) Render(depth int) {
+    fmt.Printf("%s+ %s\n", indent(depth), m.name)
+    for _, child := range m.children {
+        child.Render(depth + 1)
+    }
+}
+
+func indent(depth int) string {
+    s := ""
+    for i := 0; i < depth*2; i++ { s += " " }
+    return s
+}
+```

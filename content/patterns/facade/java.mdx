@@ -1,0 +1,21 @@
+---
+title: "facade en java"
+language: "java"
+---
+
+```java
+// Java — Facade para sistema de reportes
+public class ReportFacade {
+    private final DataFetcher fetcher = new DataFetcher();
+    private final DataTransformer transformer = new DataTransformer();
+    private final ReportRenderer renderer = new ReportRenderer();
+    private final PDFExporter exporter = new PDFExporter();
+
+    public byte[] generatePDFReport(String reportType, String dateRange) {
+        var raw = fetcher.fetch(reportType, dateRange);
+        var data = transformer.transform(raw);
+        var report = renderer.render(data, reportType);
+        return exporter.export(report);
+    }
+}
+```

@@ -14,7 +14,9 @@ interface CodeGroup {
 interface PatternContentProps {
   slug: string
   rawContent: string
+  languages: string[]
   activeLanguage?: string
+  langContent?: string
 }
 
 function parseCodeGroups(content: string): CodeGroup[] {
@@ -61,47 +63,22 @@ function renderMarkdownToHtml(content: string): string {
   return html
 }
 
-export function PatternContent({ slug, rawContent, activeLanguage }: PatternContentProps) {
-  const codeGroups = useMemo(() => parseCodeGroups(rawContent), [rawContent])
+export function PatternContent({ slug, rawContent, languages, activeLanguage, langContent }: PatternContentProps) {
+  const codeGroups = useMemo(() => {
+    if (langContent) {
+      return parseCodeGroups(langContent)
+    }
+    return []
+  }, [langContent])
 
-  // Deduplicate languages (keep first occurrence per language)
-  const uniqueLangs = useMemo(() => {
-    const seen = new Set<string>()
-    return codeGroups.filter(g => {
-      if (seen.has(g.language)) return false
-      seen.add(g.language)
-      return true
-    }).map(g => g.language)
-  }, [codeGroups])
+  const uniqueLangs = languages
 
-  // Split content into sections (text blocks between code blocks)
-  const sections = useMemo(() => {
+  const textSections = useMemo(() => {
     const parts = rawContent.split(/```[\s\S]*?```/)
-    const codes = codeGroups
-    const result: Array<{ type: 'text'; text: string } | { type: 'code'; group: CodeGroup }> = []
+    return parts.filter(p => p.trim()).map(text => ({ type: 'text', text }))
+  }, [rawContent])
 
-    parts.forEach((text, i) => {
-      if (text.trim()) {
-        result.push({ type: 'text', text })
-      }
-      if (codes[i]) {
-        result.push({ type: 'code', group: codes[i] })
-      }
-    })
-    return result
-  }, [rawContent, codeGroups])
-
-  // Find all code blocks for the active language
-  const activeCodes = useMemo(
-    () => codeGroups.filter(g => g.language === activeLanguage),
-    [codeGroups, activeLanguage],
-  )
-
-  // Render text sections only (text before first code block is the "description")
-  const textSections = useMemo(
-    () => sections.filter((s): s is { type: 'text'; text: string } => s.type === 'text'),
-    [sections],
-  )
+  const activeCodes = codeGroups
 
   if (uniqueLangs.length === 0) {
     // No code — just render the prose

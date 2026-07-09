@@ -1,0 +1,74 @@
+---
+title: "observer en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Sistema de monitoreo de stock
+interface StockObserver {
+  update(symbol: string, price: number, change: number): void
+}
+
+class StockMarket {
+  private observers = new Map<string, Set<StockObserver>>()
+  private prices = new Map<string, number>()
+
+  subscribe(symbol: string, observer: StockObserver): void {
+    if (!this.observers.has(symbol)) {
+      this.observers.set(symbol, new Set())
+    }
+    this.observers.get(symbol)!.add(observer)
+  }
+
+  unsubscribe(symbol: string, observer: StockObserver): void {
+    this.observers.get(symbol)?.delete(observer)
+  }
+
+  updatePrice(symbol: string, newPrice: number): void {
+    const oldPrice = this.prices.get(symbol) ?? newPrice
+    const change = ((newPrice - oldPrice) / oldPrice) * 100
+    this.prices.set(symbol, newPrice)
+
+    this.observers.get(symbol)?.forEach(observer => {
+      observer.update(symbol, newPrice, change)
+    })
+  }
+}
+
+class PriceAlertObserver implements StockObserver {
+  constructor(private threshold: number) {}
+
+  update(symbol: string, price: number, change: number): void {
+    if (Math.abs(change) >= this.threshold) {
+      console.log(`ALERT: ${symbol} moved ${change.toFixed(2)}% to $${price}`)
+    }
+  }
+}
+
+class PortfolioTracker implements StockObserver {
+  private holdings = new Map<string, { shares: number; avgCost: number }>()
+
+  addHolding(symbol: string, shares: number, avgCost: number): void {
+    this.holdings.set(symbol, { shares, avgCost })
+  }
+
+  update(symbol: string, price: number): void {
+    const holding = this.holdings.get(symbol)
+    if (!holding) return
+    const pnl = (price - holding.avgCost) * holding.shares
+    console.log(`Portfolio: ${symbol} P&L = $${pnl.toFixed(2)}`)
+  }
+}
+
+// Uso
+const market = new StockMarket()
+const alert = new PriceAlertObserver(2)
+const portfolio = new PortfolioTracker()
+
+portfolio.addHolding('AAPL', 10, 150)
+market.subscribe('AAPL', alert)
+market.subscribe('AAPL', portfolio)
+
+market.updatePrice('AAPL', 155) // 3.33% — dispara alerta
+market.updatePrice('AAPL', 156) // 0.64% — no dispara alerta
+```

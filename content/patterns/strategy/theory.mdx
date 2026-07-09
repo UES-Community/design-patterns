@@ -1,0 +1,58 @@
+---
+title: Strategy
+category: comportamiento
+difficulty: principiante
+description: Define una familia de algoritmos, encapsula cada uno y los hace intercambiables. Permite que el algoritmo varíe independientemente de los clientes que lo usan.
+also_known_as: ["Policy"]
+tags: ["algoritmos", "intercambiable", "contexto"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El patrón **Strategy** permite definir un conjunto de algoritmos, poner cada uno en una clase separada y hacer sus objetos intercambiables. El cliente puede elegir qué algoritmo usar en tiempo de ejecución.
+
+## Causa
+
+Tienes una clase que tiene que realizar una tarea específica de muchas maneras posibles. Por ejemplo, un sistema de pago que acepta tarjeta de crédito, PayPal, y criptomonedas. Sin Strategy, terminas con condicionales `if/else` o `switch` por doquier.
+
+## Aplicación
+
+1. Extraer cada variante de algoritmo a su propia clase, todas implementando la misma **interfaz Strategy**.
+2. El **Contexto** almacena una referencia a la estrategia actual y puede cambiarla en runtime.
+3. Los clientes pasan la estrategia al contexto o pueden cambiarla cuando sea necesario.
+
+## Estructura
+
+```
+Context
+├── -strategy: Strategy
+├── +setStrategy(strategy: Strategy): void
+└── +executeStrategy(): void
+
+Strategy (interface)
+└── +execute(data: any): any
+
+ConcreteStrategyA, ConcreteStrategyB implements Strategy
+└── +execute(data: any): any
+```
+
+### Cuándo usar
+
+- Cuando quieres usar distintas variantes de un algoritmo dentro de un objeto y cambiar de uno a otro en tiempo de ejecución.
+- Cuando tienes muchas clases similares que solo difieren en su comportamiento.
+- Para aislar la lógica de negocio de los detalles de implementación de algoritmos.
+
+
+
+
+
+
+
+
+
+## Patrones relacionados
+
+- **State** — similar en estructura, pero el State cambia el comportamiento según el estado interno
+- **Command** — Strategy sin parámetros puede implementarse como Command
+- **Template Method** — alternativa basada en herencia en lugar de composición

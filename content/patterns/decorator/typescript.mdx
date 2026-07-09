@@ -1,0 +1,75 @@
+---
+title: "decorator en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Middleware de request HTTP
+interface RequestHandler {
+  handle(request: { url: string; headers: Record<string, string>; body?: unknown }): Promise<Response>
+}
+
+class BaseHandler implements RequestHandler {
+  async handle(request: { url: string; headers: Record<string, string> }): Promise<Response> {
+    console.log(`Fetching ${request.url}`)
+    return fetch(request.url, { headers: request.headers })
+  }
+}
+
+abstract class HandlerDecorator implements RequestHandler {
+  constructor(protected wrapped: RequestHandler) {}
+  abstract handle(request: { url: string; headers: Record<string, string>; body?: unknown }): Promise<Response>
+}
+
+class AuthDecorator extends HandlerDecorator {
+  constructor(wrapped: RequestHandler, private token: string) {
+    super(wrapped)
+  }
+
+  async handle(request: { url: string; headers: Record<string, string> }): Promise<Response> {
+    const withAuth = {
+      ...request,
+      headers: { ...request.headers, Authorization: `Bearer ${this.token}` },
+    }
+    return this.wrapped.handle(withAuth)
+  }
+}
+
+class LoggingDecorator extends HandlerDecorator {
+  async handle(request: { url: string; headers: Record<string, string> }): Promise<Response> {
+    const start = Date.now()
+    console.log(`[LOG] --> ${request.url}`)
+    const response = await this.wrapped.handle(request)
+    console.log(`[LOG] <-- ${request.url} (${Date.now() - start}ms)`)
+    return response
+  }
+}
+
+class RetryDecorator extends HandlerDecorator {
+  constructor(wrapped: RequestHandler, private maxRetries: number) {
+    super(wrapped)
+  }
+
+  async handle(request: { url: string; headers: Record<string, string> }): Promise<Response> {
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await this.wrapped.handle(request)
+      } catch (err) {
+        if (attempt === this.maxRetries) throw err
+        console.log(`Retry ${attempt + 1}/${this.maxRetries}...`)
+      }
+    }
+    throw new Error('Max retries exceeded')
+  }
+}
+
+// Uso — composición de decoradores
+const handler = new LoggingDecorator(
+  new RetryDecorator(
+    new AuthDecorator(new BaseHandler(), 'my-secret-token'),
+    3,
+  ),
+)
+
+handler.handle({ url: 'https://api.example.com/data', headers: {} })
+```

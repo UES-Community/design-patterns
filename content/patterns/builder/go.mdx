@@ -1,0 +1,65 @@
+---
+title: "builder en go"
+language: "go"
+---
+
+```go
+// Go — HTTP Request Builder
+package builder
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+)
+
+type RequestBuilder struct {
+    method  string
+    url     string
+    headers map[string]string
+    body    any
+}
+
+func NewRequest(method, url string) *RequestBuilder {
+    return &RequestBuilder{
+        method:  method,
+        url:     url,
+        headers: make(map[string]string),
+    }
+}
+
+func (b *RequestBuilder) Header(key, value string) *RequestBuilder {
+    b.headers[key] = value
+    return b
+}
+
+func (b *RequestBuilder) JSON(body any) *RequestBuilder {
+    b.body = body
+    b.headers["Content-Type"] = "application/json"
+    return b
+}
+
+func (b *RequestBuilder) Bearer(token string) *RequestBuilder {
+    b.headers["Authorization"] = "Bearer " + token
+    return b
+}
+
+func (b *RequestBuilder) Build() (*http.Request, error) {
+    var bodyReader *bytes.Reader
+    if b.body != nil {
+        data, err := json.Marshal(b.body)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = bytes.NewReader(data)
+    }
+    req, err := http.NewRequest(b.method, b.url, bodyReader)
+    if err != nil {
+        return nil, err
+    }
+    for k, v := range b.headers {
+        req.Header.Set(k, v)
+    }
+    return req, nil
+}
+```

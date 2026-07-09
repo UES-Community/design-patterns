@@ -1,0 +1,27 @@
+---
+title: Proxy
+category: estructural
+difficulty: intermedio
+description: Proporciona un sustituto o marcador de posición para otro objeto. Un proxy controla el acceso al objeto original, permitiendo realizar operaciones antes o después de que la solicitud llegue al objeto original.
+also_known_as: ["Surrogate"]
+tags: ["control de acceso", "cache", "lazy loading"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Proxy** actúa como un intermediario entre el cliente y el objeto real. Puede añadir funcionalidad (caché, control de acceso, logging) sin modificar la clase original.
+
+## Tipos de Proxy
+
+- **Virtual Proxy** — retrasa la creación/carga de objetos costosos hasta que son necesarios (lazy loading).
+- **Protection Proxy** — controla el acceso al objeto original según los permisos.
+- **Caching Proxy** — guarda los resultados de operaciones costosas para reutilizarlos.
+- **Remote Proxy** — representa un objeto en otro espacio de direcciones (RPC).
+
+### Cuándo usar
+
+- Para controlar el acceso a un objeto (autenticación, autorización).
+- Para implementar lazy initialization de objetos costosos.
+- Para implementar caché de resultados.
+- Para logging o auditoría transparente.

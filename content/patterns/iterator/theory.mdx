@@ -1,0 +1,19 @@
+---
+title: Iterator
+category: comportamiento
+difficulty: principiante
+description: Proporciona una forma de acceder secuencialmente a los elementos de un objeto agregado sin exponer su representación subyacente.
+also_known_as: ["Cursor"]
+tags: ["recorrido", "colección", "secuencia"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Iterator** abstrae la forma en que se recorre una colección. El cliente no necesita saber si la colección es un array, un árbol, un grafo o una base de datos — solo llama a `next()`.
+
+### Cuándo usar
+
+- Cuando quieres ocultar la implementación interna de una colección.
+- Cuando quieres soportar múltiples formas de recorrer la misma colección.
+- Cuando quieres proporcionar una interfaz uniforme para recorrer diferentes tipos de colecciones.

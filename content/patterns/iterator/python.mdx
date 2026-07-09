@@ -1,0 +1,59 @@
+---
+title: "iterator en python"
+language: "python"
+---
+
+```python
+# Python — Iterador paginado para API REST
+from typing import TypeVar, Generic, Iterator, Optional
+from dataclasses import dataclass
+
+T = TypeVar('T')
+
+@dataclass
+class Page(Generic[T]):
+    items: list[T]
+    next_cursor: Optional[str]
+    total: int
+
+class PaginatedIterator(Generic[T]):
+    def __init__(self, fetch_page, page_size: int = 10):
+        self._fetch = fetch_page
+        self._page_size = page_size
+        self._cursor: Optional[str] = None
+        self._items: list[T] = []
+        self._index = 0
+        self._exhausted = False
+
+    def __iter__(self) -> Iterator[T]:
+        return self
+
+    def __next__(self) -> T:
+        if self._index >= len(self._items):
+            if self._exhausted:
+                raise StopIteration
+
+            page = self._fetch(cursor=self._cursor, size=self._page_size)
+            self._items = page.items
+            self._cursor = page.next_cursor
+            self._exhausted = page.next_cursor is None
+            self._index = 0
+
+            if not self._items:
+                raise StopIteration
+
+        item = self._items[self._index]
+        self._index += 1
+        return item
+
+# Uso
+def fetch_users(cursor=None, size=10):
+    users = [{'id': i, 'name': f'User {i}'} for i in range(1, 26)]
+    start = int(cursor or 0)
+    page_items = users[start:start + size]
+    next_c = str(start + size) if start + size < len(users) else None
+    return Page(page_items, next_c, len(users))
+
+for user in PaginatedIterator(fetch_users, page_size=10):
+    print(user['name'])
+```

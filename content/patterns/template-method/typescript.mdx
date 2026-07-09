@@ -1,0 +1,81 @@
+---
+title: "template-method en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Pipeline de importación de datos
+abstract class DataImporter {
+  // Template method — define el flujo completo
+  async import(source: string): Promise<void> {
+    console.log(`Starting import from ${source}`)
+
+    const raw = await this.readData(source)
+    const validated = this.validate(raw)
+    const transformed = this.transform(validated)
+    await this.save(transformed)
+
+    this.onComplete(transformed.length) // hook
+  }
+
+  protected abstract readData(source: string): Promise<string[]>
+  protected abstract validate(data: string[]): string[]
+  protected abstract transform(data: string[]): Record<string, unknown>[]
+
+  protected async save(data: Record<string, unknown>[]): Promise<void> {
+    console.log(`Saving ${data.length} records...`)
+  }
+
+  // Hook — puede sobreescribirse, tiene implementación por defecto
+  protected onComplete(count: number): void {
+    console.log(`Import complete: ${count} records`)
+  }
+}
+
+class CSVImporter extends DataImporter {
+  protected async readData(source: string): Promise<string[]> {
+    console.log(`Reading CSV from ${source}`)
+    return ['id,name,age', '1,Alice,30', '2,Bob,25']
+  }
+
+  protected validate(data: string[]): string[] {
+    return data.filter(line => line.split(',').length === 3)
+  }
+
+  protected transform(data: string[]): Record<string, unknown>[] {
+    const [header, ...rows] = data
+    const keys = header.split(',')
+    return rows.map(row => {
+      const values = row.split(',')
+      return Object.fromEntries(keys.map((k, i) => [k, values[i]]))
+    })
+  }
+}
+
+class JSONImporter extends DataImporter {
+  protected async readData(source: string): Promise<string[]> {
+    console.log(`Reading JSON from ${source}`)
+    return ['{"id":1,"name":"Alice"}', '{"id":2,"name":"Bob"}']
+  }
+
+  protected validate(data: string[]): string[] {
+    return data.filter(item => {
+      try { JSON.parse(item); return true }
+      catch { return false }
+    })
+  }
+
+  protected transform(data: string[]): Record<string, unknown>[] {
+    return data.map(item => JSON.parse(item))
+  }
+
+  protected onComplete(count: number): void {
+    super.onComplete(count)
+    console.log('JSON import finished successfully')
+  }
+}
+
+// Uso
+const csvImporter = new CSVImporter()
+await csvImporter.import('data.csv')
+```

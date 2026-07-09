@@ -1,0 +1,43 @@
+---
+title: "decorator en go"
+language: "go"
+---
+
+```go
+// Go — Decoradores de middleware HTTP
+package decorator
+
+import (
+    "fmt"
+    "net/http"
+    "time"
+)
+
+type Middleware func(http.Handler) http.Handler
+
+func Logger(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        next.ServeHTTP(w, r)
+        fmt.Printf("[%s] %s %s\n", time.Since(start), r.Method, r.URL.Path)
+    })
+}
+
+func Auth(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := r.Header.Get("Authorization")
+        if token == "" {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        next.ServeHTTP(w, r)
+    })
+}
+
+func Chain(h http.Handler, middlewares ...Middleware) http.Handler {
+    for i := len(middlewares) - 1; i >= 0; i-- {
+        h = middlewares[i](h)
+    }
+    return h
+}
+```

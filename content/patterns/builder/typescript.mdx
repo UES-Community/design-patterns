@@ -1,0 +1,75 @@
+---
+title: "builder en typescript"
+language: "typescript"
+---
+
+```typescript
+// TypeScript — Query Builder de base de datos
+class QueryBuilder {
+  private table = ''
+  private conditions: string[] = []
+  private selectedFields = ['*']
+  private limitValue?: number
+  private offsetValue?: number
+  private orderByClause?: string
+
+  from(table: string): this {
+    this.table = table
+    return this
+  }
+
+  select(...fields: string[]): this {
+    this.selectedFields = fields
+    return this
+  }
+
+  where(condition: string): this {
+    this.conditions.push(condition)
+    return this
+  }
+
+  limit(n: number): this {
+    this.limitValue = n
+    return this
+  }
+
+  offset(n: number): this {
+    this.offsetValue = n
+    return this
+  }
+
+  orderBy(field: string, direction: 'ASC' | 'DESC' = 'ASC'): this {
+    this.orderByClause = `${field} ${direction}`
+    return this
+  }
+
+  build(): string {
+    if (!this.table) throw new Error('Table is required')
+
+    let query = `SELECT ${this.selectedFields.join(', ')} FROM ${this.table}`
+
+    if (this.conditions.length > 0) {
+      query += ` WHERE ${this.conditions.join(' AND ')}`
+    }
+    if (this.orderByClause) query += ` ORDER BY ${this.orderByClause}`
+    if (this.limitValue !== undefined) query += ` LIMIT ${this.limitValue}`
+    if (this.offsetValue !== undefined) query += ` OFFSET ${this.offsetValue}`
+
+    return query
+  }
+}
+
+// Uso — API fluida
+const query = new QueryBuilder()
+  .from('users')
+  .select('id', 'name', 'email')
+  .where('age > 18')
+  .where('active = true')
+  .orderBy('created_at', 'DESC')
+  .limit(10)
+  .offset(20)
+  .build()
+
+console.log(query)
+// SELECT id, name, email FROM users WHERE age > 18 AND active = true ORDER BY created_at DESC LIMIT 10 OFFSET 20
+```

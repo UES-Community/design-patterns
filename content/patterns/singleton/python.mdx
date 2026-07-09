@@ -1,0 +1,31 @@
+---
+title: "singleton en python"
+language: "python"
+---
+
+```python
+# Python — usando __new__ para control de instanciación
+class DatabaseConnection:
+    _instance: 'DatabaseConnection | None' = None
+
+    def __new__(cls, url: str = 'postgres://localhost/app'):
+        if cls._instance is None:
+            instance = super().__new__(cls)
+            instance.url = url
+            instance._connection_count = 0
+            print(f'Connecting to {url}')
+            cls._instance = instance
+        return cls._instance
+
+    def query(self, sql: str) -> str:
+        self._connection_count += 1
+        return f'[Query #{self._connection_count}] {sql}'
+
+
+# Uso
+db1 = DatabaseConnection()
+db2 = DatabaseConnection()
+
+print(db1 is db2)          # True — misma instancia
+print(db1.query('SELECT * FROM users'))
+```

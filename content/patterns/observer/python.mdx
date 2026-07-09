@@ -1,0 +1,46 @@
+---
+title: "observer en python"
+language: "python"
+---
+
+```python
+# Python — Sistema de eventos con tipado genérico
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Callable
+from dataclasses import dataclass
+
+T = TypeVar('T')
+
+@dataclass
+class Event(Generic[T]):
+    name: str
+    payload: T
+
+class EventBus(Generic[T]):
+    def __init__(self):
+        self._handlers: list[Callable[[Event[T]], None]] = []
+
+    def subscribe(self, handler: Callable[[Event[T]], None]) -> None:
+        self._handlers.append(handler)
+
+    def unsubscribe(self, handler: Callable[[Event[T]], None]) -> None:
+        self._handlers.remove(handler)
+
+    def publish(self, event: Event[T]) -> None:
+        for handler in self._handlers:
+            handler(event)
+
+# Uso
+bus: EventBus[dict] = EventBus()
+
+def log_handler(event: Event[dict]) -> None:
+    print(f'[LOG] {event.name}: {event.payload}')
+
+def analytics_handler(event: Event[dict]) -> None:
+    print(f'[ANALYTICS] tracking: {event.name}')
+
+bus.subscribe(log_handler)
+bus.subscribe(analytics_handler)
+
+bus.publish(Event('user.signup', {'id': 1, 'email': 'alice@example.com'}))
+```

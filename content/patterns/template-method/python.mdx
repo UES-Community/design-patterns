@@ -1,0 +1,60 @@
+---
+title: "template-method en python"
+language: "python"
+---
+
+```python
+# Python — Generador de reportes con distintos formatos
+from abc import ABC, abstractmethod
+
+class ReportGenerator(ABC):
+    def generate(self, data: list[dict]) -> str:
+        """Template method"""
+        header = self.make_header()
+        body = self.make_body(data)
+        footer = self.make_footer()
+        return self.assemble(header, body, footer)
+
+    @abstractmethod
+    def make_header(self) -> str: ...
+
+    @abstractmethod
+    def make_body(self, data: list[dict]) -> str: ...
+
+    def make_footer(self) -> str:
+        return ''  # Hook con implementación por defecto
+
+    def assemble(self, header: str, body: str, footer: str) -> str:
+        return '\n'.join(filter(bool, [header, body, footer]))
+
+class HTMLReport(ReportGenerator):
+    def make_header(self) -> str:
+        return '<html><body><h1>Report</h1><table>'
+
+    def make_body(self, data: list[dict]) -> str:
+        rows = ''.join(
+            f"<tr>{''.join(f'<td>{v}</td>' for v in row.values())}</tr>"
+            for row in data
+        )
+        return rows
+
+    def make_footer(self) -> str:
+        return '</table></body></html>'
+
+class MarkdownReport(ReportGenerator):
+    def make_header(self) -> str:
+        return '# Report\n'
+
+    def make_body(self, data: list[dict]) -> str:
+        if not data:
+            return ''
+        headers = ' | '.join(data[0].keys())
+        separator = ' | '.join(['---'] * len(data[0]))
+        rows = '\n'.join(' | '.join(str(v) for v in row.values()) for row in data)
+        return f'{headers}\n{separator}\n{rows}'
+
+# Uso
+data = [{'name': 'Alice', 'score': 95}, {'name': 'Bob', 'score': 87}]
+print(HTMLReport().generate(data))
+print(MarkdownReport().generate(data))
+```

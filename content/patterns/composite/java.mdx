@@ -1,0 +1,47 @@
+---
+title: "composite en java"
+language: "java"
+---
+
+```java
+// Java — Componentes UI
+public abstract class UIComponent {
+    protected String id;
+
+    public UIComponent(String id) { this.id = id; }
+
+    public abstract int getWidth();
+    public abstract int getHeight();
+    public abstract void draw(String indent);
+}
+
+public class Button extends UIComponent {
+    private int width, height;
+
+    public Button(String id, int w, int h) {
+        super(id);
+        this.width = w;
+        this.height = h;
+    }
+
+    public int getWidth()  { return width; }
+    public int getHeight() { return height; }
+    public void draw(String indent) {
+        System.out.println(indent + "[Button:" + id + " " + width + "x" + height + "]");
+    }
+}
+
+public class Panel extends UIComponent {
+    private java.util.List<UIComponent> children = new java.util.ArrayList<>();
+
+    public Panel(String id) { super(id); }
+
+    public void add(UIComponent c) { children.add(c); }
+    public int getWidth()  { return children.stream().mapToInt(UIComponent::getWidth).max().orElse(0); }
+    public int getHeight() { return children.stream().mapToInt(UIComponent::getHeight).sum(); }
+    public void draw(String indent) {
+        System.out.println(indent + "[Panel:" + id + "]");
+        children.forEach(c -> c.draw(indent + "  "));
+    }
+}
+```

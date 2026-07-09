@@ -1,0 +1,48 @@
+---
+title: "decorator en python"
+language: "python"
+---
+
+```python
+# Python — Decoradores de validación y transformación de datos
+from functools import wraps
+from typing import Any, Callable
+import time
+
+def timer(func: Callable) -> Callable:
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        print(f'{func.__name__} took {elapsed:.4f}s')
+        return result
+    return wrapper
+
+def validate_positive(func: Callable) -> Callable:
+    @wraps(func)
+    def wrapper(value: float, *args: Any, **kwargs: Any) -> Any:
+        if value <= 0:
+            raise ValueError(f'Expected positive value, got {value}')
+        return func(value, *args, **kwargs)
+    return wrapper
+
+def cache(func: Callable) -> Callable:
+    memo: dict = {}
+    @wraps(func)
+    def wrapper(*args: Any) -> Any:
+        if args not in memo:
+            memo[args] = func(*args)
+        return memo[args]
+    return wrapper
+
+@timer
+@validate_positive
+@cache
+def compute_factorial(n: int) -> int:
+    if n <= 1:
+        return 1
+    return n * compute_factorial(n - 1)
+
+print(compute_factorial(10))
+```

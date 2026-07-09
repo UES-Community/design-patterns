@@ -1,0 +1,18 @@
+---
+title: Template Method
+category: comportamiento
+difficulty: principiante
+description: Define el esqueleto de un algoritmo en la superclase, delegando algunos pasos a las subclases sin cambiar la estructura general del algoritmo.
+also_known_as: []
+tags: ["herencia", "algoritmo", "hook"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Objetivo
+
+El **Template Method** define los pasos de un algoritmo en una clase base, permite que las subclases implementen o sobreescriban pasos específicos sin cambiar el flujo general del algoritmo.
+
+### Cuándo usar
+
+- Cuando quieres que los clientes extiendan pasos particulares de un algoritmo, no el algoritmo completo.
+- Cuando tienes varias clases que contienen algoritmos casi idénticos con algunas diferencias pequeñas.

@@ -1,0 +1,54 @@
+---
+title: "composite en python"
+language: "python"
+---
+
+```python
+# Python — Expresiones matemáticas como árbol
+from abc import ABC, abstractmethod
+
+class Expression(ABC):
+    @abstractmethod
+    def evaluate(self) -> float: ...
+
+    @abstractmethod
+    def to_string(self) -> str: ...
+
+class Number(Expression):
+    def __init__(self, value: float):
+        self.value = value
+
+    def evaluate(self) -> float:
+        return self.value
+
+    def to_string(self) -> str:
+        return str(self.value)
+
+class BinaryOp(Expression):
+    def __init__(self, left: Expression, operator: str, right: Expression):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def evaluate(self) -> float:
+        l, r = self.left.evaluate(), self.right.evaluate()
+        match self.operator:
+            case '+': return l + r
+            case '-': return l - r
+            case '*': return l * r
+            case '/': return l / r
+        raise ValueError(f'Unknown op: {self.operator}')
+
+    def to_string(self) -> str:
+        return f'({self.left.to_string()} {self.operator} {self.right.to_string()})'
+
+# Construir: (3 + 4) * (2 - 1)
+expr = BinaryOp(
+    BinaryOp(Number(3), '+', Number(4)),
+    '*',
+    BinaryOp(Number(2), '-', Number(1))
+)
+
+print(expr.to_string())  # ((3.0 + 4.0) * (2.0 - 1.0))
+print(expr.evaluate())   # 7.0
+```

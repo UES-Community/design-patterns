@@ -1,0 +1,46 @@
+---
+title: "factory-method en python"
+language: "python"
+---
+
+```python
+# Python — Exportadores de documentos
+from abc import ABC, abstractmethod
+
+class Document(ABC):
+    @abstractmethod
+    def export(self, content: str) -> str: ...
+
+class PDFDocument(Document):
+    def export(self, content: str) -> str:
+        return f'[PDF] {content}'
+
+class HTMLDocument(Document):
+    def export(self, content: str) -> str:
+        return f'<html><body>{content}</body></html>'
+
+class MarkdownDocument(Document):
+    def export(self, content: str) -> str:
+        return f'# Export\n\n{content}'
+
+class DocumentExporter(ABC):
+    @abstractmethod
+    def create_document(self) -> Document: ...
+
+    def export(self, content: str) -> str:
+        doc = self.create_document()
+        return doc.export(content)
+
+class PDFExporter(DocumentExporter):
+    def create_document(self) -> Document:
+        return PDFDocument()
+
+class HTMLExporter(DocumentExporter):
+    def create_document(self) -> Document:
+        return HTMLDocument()
+
+# Uso
+exporters = [PDFExporter(), HTMLExporter()]
+for exporter in exporters:
+    print(exporter.export('Hello, World!'))
+```
