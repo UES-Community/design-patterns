@@ -1,33 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
+import Link from 'next/link'
 import { CodeBlock } from './code-block'
-
-const LANGUAGE_LABELS: Record<string, string> = {
-  typescript: 'TypeScript',
-  python: 'Python',
-  go: 'Go',
-  java: 'Java',
-  javascript: 'JavaScript',
-  rust: 'Rust',
-  cpp: 'C++',
-  csharp: 'C#',
-  ruby: 'Ruby',
-  php: 'PHP',
-}
-
-const LANGUAGE_COLORS: Record<string, string> = {
-  typescript: '#3178C6',
-  python:     '#3776AB',
-  go:         '#00ADD8',
-  java:       '#ED8B00',
-  javascript: '#F7DF1E',
-  rust:       '#CE422B',
-  cpp:        '#00599C',
-  csharp:     '#512BD4',
-  ruby:       '#CC342D',
-  php:        '#777BB4',
-}
+import { LANGUAGE_LABELS, LANGUAGE_COLORS } from '@/lib/types'
 
 interface CodeGroup {
   language: string
@@ -36,7 +12,9 @@ interface CodeGroup {
 }
 
 interface PatternContentProps {
+  slug: string
   rawContent: string
+  activeLanguage?: string
 }
 
 function parseCodeGroups(content: string): CodeGroup[] {
@@ -83,7 +61,7 @@ function renderMarkdownToHtml(content: string): string {
   return html
 }
 
-export function PatternContent({ rawContent }: PatternContentProps) {
+export function PatternContent({ slug, rawContent, activeLanguage }: PatternContentProps) {
   const codeGroups = useMemo(() => parseCodeGroups(rawContent), [rawContent])
 
   // Deduplicate languages (keep first occurrence per language)
@@ -95,8 +73,6 @@ export function PatternContent({ rawContent }: PatternContentProps) {
       return true
     }).map(g => g.language)
   }, [codeGroups])
-
-  const [activeLanguage, setActiveLanguage] = useState<string>(uniqueLangs[0] ?? 'typescript')
 
   // Split content into sections (text blocks between code blocks)
   const sections = useMemo(() => {
@@ -162,13 +138,42 @@ export function PatternContent({ rawContent }: PatternContentProps) {
           background: 'var(--color-surface-2)',
           overflowX: 'auto',
         }}>
+          {/* Teoría / Resumen general Tab */}
+          <Link
+            href={`/patterns/${slug}`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '10px 18px',
+              background: 'none',
+              border: 'none',
+              borderBottom: !activeLanguage ? `2px solid var(--color-accent)` : '2px solid transparent',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: !activeLanguage ? 600 : 400,
+              fontFamily: 'var(--font-mono)',
+              color: !activeLanguage ? 'var(--color-ink)' : 'var(--color-ink-3)',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s',
+              textDecoration: 'none',
+            }}
+          >
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: 'var(--color-accent)',
+              opacity: !activeLanguage ? 1 : 0.4,
+              flexShrink: 0,
+            }} />
+            Teoría
+          </Link>
+
+          {/* Languages tabs */}
           {uniqueLangs.map(lang => {
             const isActive = lang === activeLanguage
             const color = LANGUAGE_COLORS[lang] ?? 'var(--color-accent)'
             return (
-              <button
+              <Link
                 key={lang}
-                onClick={() => setActiveLanguage(lang)}
+                href={`/patterns/${slug}/${lang}`}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7,
                   padding: '10px 18px',
@@ -182,6 +187,7 @@ export function PatternContent({ rawContent }: PatternContentProps) {
                   color: isActive ? 'var(--color-ink)' : 'var(--color-ink-3)',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.15s',
+                  textDecoration: 'none',
                 }}
               >
                 <span style={{
@@ -191,24 +197,101 @@ export function PatternContent({ rawContent }: PatternContentProps) {
                   flexShrink: 0,
                 }} />
                 {LANGUAGE_LABELS[lang] ?? lang}
-              </button>
+              </Link>
             )
           })}
         </div>
 
-        {/* Code */}
-        <div style={{ padding: '1.5rem' }}>
-          {activeCodes.map((group, i) => (
-            <div key={i} style={{ marginBottom: i < activeCodes.length - 1 ? '1.5rem' : 0 }}>
-              <CodeBlock
-                code={group.code}
-                language={group.language}
-                title={group.comment}
-              />
+        {/* Content Area */}
+        {activeLanguage ? (
+          /* Code blocks for active language */
+          <div style={{ padding: '1.5rem' }}>
+            {activeCodes.map((group, i) => (
+              <div key={i} style={{ marginBottom: i < activeCodes.length - 1 ? '1.5rem' : 0 }}>
+                <CodeBlock
+                  code={group.code}
+                  language={group.language}
+                  title={group.comment}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Selection grid for Teoría view */
+          <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: 16, fontWeight: 600, color: 'var(--color-ink)' }}>
+              Código de Implementación
+            </h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: 13, color: 'var(--color-ink-3)' }}>
+              Selecciona uno de los lenguajes de programación disponibles para ver el código detallado:
+            </p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: 16,
+              maxWidth: 600,
+              margin: '0 auto',
+            }}>
+              {uniqueLangs.map(lang => {
+                const color = LANGUAGE_COLORS[lang] ?? 'var(--color-accent)'
+                const label = LANGUAGE_LABELS[lang] ?? lang
+                return (
+                  <Link
+                    key={lang}
+                    href={`/patterns/${slug}/${lang}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div
+                      style={{
+                        padding: '18px 12px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 12,
+                        background: 'var(--color-surface-2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                      onMouseEnter={e => {
+                        const div = e.currentTarget as HTMLDivElement
+                        div.style.borderColor = color
+                        div.style.background = 'var(--color-surface-3)'
+                        div.style.transform = 'translateY(-3px)'
+                        div.style.boxShadow = `0 6px 20px ${color}15`
+                      }}
+                      onMouseLeave={e => {
+                        const div = e.currentTarget as HTMLDivElement
+                        div.style.borderColor = 'var(--color-border)'
+                        div.style.background = 'var(--color-surface-2)'
+                        div.style.transform = 'translateY(0)'
+                        div.style.boxShadow = 'none'
+                      }}
+                    >
+                      <span style={{
+                        width: 10, height: 10, borderRadius: '50%',
+                        background: color,
+                        boxShadow: `0 0 8px ${color}`,
+                      }} />
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: 'var(--color-ink-2)',
+                      }}>
+                        {label}
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+

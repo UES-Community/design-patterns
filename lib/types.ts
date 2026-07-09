@@ -52,3 +52,30 @@ export const DIFFICULTY_LABEL: Record<PatternMeta['difficulty'], string> = {
   intermedio: 'Intermedio',
   avanzado: 'Avanzado',
 }
+
+export const LANGUAGE_LABELS: Record<string, string> = {
+  typescript: 'TypeScript',
+  python: 'Python',
+  go: 'Go',
+  java: 'Java',
+  javascript: 'JavaScript',
+  rust: 'Rust',
+  cpp: 'C++',
+  csharp: 'C#',
+  ruby: 'Ruby',
+  php: 'PHP',
+}
+
+export const LANGUAGE_COLORS: Record<string, string> = {
+  typescript: '#3178C6',
+  python:     '#3776AB',
+  go:         '#00ADD8',
+  java:       '#ED8B00',
+  javascript: '#F7DF1E',
+  rust:       '#CE422B',
+  cpp:        '#00599C',
+  csharp:     '#512BD4',
+  ruby:       '#CC342D',
+  php:        '#777BB4',
+}
+

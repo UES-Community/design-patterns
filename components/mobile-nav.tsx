@@ -115,7 +115,7 @@ export function MobileNav({ patterns }: MobileNavProps) {
                 {isOpenCat && (
                   <div className="mb-2">
                     {items.map(pattern => {
-                      const isActive = pathname === `/patterns/${pattern.slug}`
+                      const isActive = pathname === `/patterns/${pattern.slug}` || pathname.startsWith(`/patterns/${pattern.slug}/`)
                       return (
                         <Link
                           key={pattern.slug}

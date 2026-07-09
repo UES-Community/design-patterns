@@ -1,33 +1,38 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getPatternBySlug, getAllPatternSlugs, getAllPatterns } from '@/lib/patterns'
-import { CATEGORY_META, DIFFICULTY_LABEL } from '@/lib/types'
+import { getPatternBySlug, getAllPatternSlugLangs, getAllPatterns } from '@/lib/patterns'
+import { CATEGORY_META, DIFFICULTY_LABEL, LANGUAGE_LABELS } from '@/lib/types'
 import { MainLayout } from '@/components/main-layout'
 import { PatternContent } from '@/components/pattern-content'
 import { PatternNav } from '@/components/pattern-nav'
 
 interface Props {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; lang: string }>
 }
 
 export async function generateStaticParams() {
-  return getAllPatternSlugs().map((slug) => ({ slug }))
+  return getAllPatternSlugLangs()
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, lang } = await params
   const pattern = getPatternBySlug(slug)
   if (!pattern) return {}
+  const langLabel = LANGUAGE_LABELS[lang] ?? lang
   return {
-    title: pattern.title,
-    description: pattern.description,
+    title: `${pattern.title} en ${langLabel}`,
+    description: `Implementación práctica del patrón de diseño ${pattern.title} en ${langLabel}. ${pattern.description}`,
   }
 }
 
-export default async function PatternPage({ params }: Props) {
-  const { slug } = await params
+export default async function PatternLangPage({ params }: Props) {
+  const { slug, lang } = await params
   const pattern = getPatternBySlug(slug)
-  if (!pattern) notFound()
+  
+  // If pattern doesn't exist, or requested language is not supported by this pattern, return 404
+  if (!pattern || !pattern.languages.includes(lang)) {
+    notFound()
+  }
 
   const allPatterns = await getAllPatterns()
   const catMeta = CATEGORY_META[pattern.category]
@@ -56,7 +61,16 @@ export default async function PatternPage({ params }: Props) {
             {catMeta.label}
           </a>
           <span className="text-[var(--color-border)]">/</span>
-          <span className="text-[var(--color-ink-2)] truncate">{pattern.title}</span>
+          <a
+            href={`/patterns/${pattern.slug}`}
+            className="no-underline hover:underline whitespace-nowrap text-[var(--color-ink-2)]"
+          >
+            {pattern.title}
+          </a>
+          <span className="text-[var(--color-border)]">/</span>
+          <span className="text-[var(--color-ink-2)] truncate font-semibold" style={{ color: catMeta.color }}>
+            {LANGUAGE_LABELS[lang] ?? lang}
+          </span>
         </nav>
 
         {/* Header */}
@@ -80,15 +94,24 @@ export default async function PatternPage({ params }: Props) {
             </span>
 
             {/* Languages */}
-            {pattern.languages.map(lang => (
-              <span key={lang} className="text-[10px] md:text-xs font-mono text-[var(--color-ink-3)] bg-[var(--color-surface-3)] border border-[var(--color-border)] rounded px-2.5 py-1">
-                {lang}
+            {pattern.languages.map(l => (
+              <span
+                key={l}
+                className="text-[10px] md:text-xs font-mono rounded px-2.5 py-1"
+                style={{
+                  color: l === lang ? 'var(--color-ink)' : 'var(--color-ink-3)',
+                  background: l === lang ? 'var(--color-surface-3)' : 'var(--color-surface-2)',
+                  border: l === lang ? '1px solid var(--color-border-2)' : '1px solid var(--color-border)',
+                  fontWeight: l === lang ? 600 : 400,
+                }}
+              >
+                {l}
               </span>
             ))}
           </div>
 
           <h1 className="m-0 mb-2 md:mb-3 text-2xl md:text-4xl font-bold text-[var(--color-ink)] tracking-tight leading-tight">
-            {pattern.title}
+            {pattern.title} en {LANGUAGE_LABELS[lang] ?? lang}
             <span style={{ color: catMeta.color }}>.</span>
           </h1>
 
@@ -110,7 +133,7 @@ export default async function PatternPage({ params }: Props) {
         <div className="h-px bg-gradient-to-r from-[var(--color-border)] to-transparent mb-8 md:mb-10" />
 
         {/* MDX Content with language switcher */}
-        <PatternContent slug={slug} rawContent={pattern.content} />
+        <PatternContent slug={slug} rawContent={pattern.content} activeLanguage={lang} />
 
         {/* Tags */}
         {pattern.tags.length > 0 && (

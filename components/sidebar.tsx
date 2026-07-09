@@ -132,7 +132,7 @@ export function Sidebar({ patterns }: SidebarProps) {
               {isOpen && (
                 <div style={{ marginBottom: 8 }}>
                   {items.map(pattern => {
-                    const isActive = pathname === `/patterns/${pattern.slug}`
+                    const isActive = pathname === `/patterns/${pattern.slug}` || pathname.startsWith(`/patterns/${pattern.slug}/`)
                     return (
                       <Link key={pattern.slug} href={`/patterns/${pattern.slug}`} style={{ textDecoration: 'none' }}>
                         <div style={{

@@ -66,3 +66,18 @@ export async function getPatternsByCategory(category: PatternCategory): Promise<
   const all = await getAllPatterns()
   return all.filter((p) => p.category === category)
 }
+
+export function getAllPatternSlugLangs(): Array<{ slug: string; lang: string }> {
+  const slugs = getAllPatternSlugs()
+  const params: Array<{ slug: string; lang: string }> = []
+  for (const slug of slugs) {
+    const pattern = getPatternBySlug(slug)
+    if (pattern) {
+      for (const lang of pattern.languages) {
+        params.push({ slug, lang })
+      }
+    }
+  }
+  return params
+}
+
