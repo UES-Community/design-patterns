@@ -1,0 +1,220 @@
+---
+title: Composite
+category: estructural
+difficulty: intermedio
+description: Compone objetos en estructuras de árbol para representar jerarquías parte-todo. Permite que los clientes traten objetos individuales y composiciones de objetos de manera uniforme.
+also_known_as: ["Object Tree"]
+tags: ["árbol", "recursivo", "jerarquía"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El **Composite** permite tratar tanto objetos individuales como composiciones de objetos de manera idéntica. Es ideal para estructuras de árbol como sistemas de archivos, UI widgets, o ASTs.
+
+## Cuándo usar
+
+- Cuando quieres representar jerarquías parte-todo de objetos.
+- Cuando quieres que los clientes ignoren la diferencia entre composiciones de objetos y objetos individuales.
+
+```typescript
+// TypeScript — Sistema de archivos
+abstract class FileSystemItem {
+  constructor(protected name: string) {}
+
+  abstract getSize(): number
+  abstract render(indent?: number): string
+
+  getName(): string {
+    return this.name
+  }
+}
+
+class File extends FileSystemItem {
+  constructor(name: string, private size: number) {
+    super(name)
+  }
+
+  getSize(): number {
+    return this.size
+  }
+
+  render(indent = 0): string {
+    return `${'  '.repeat(indent)}📄 ${this.name} (${this.size}B)`
+  }
+}
+
+class Directory extends FileSystemItem {
+  private children: FileSystemItem[] = []
+
+  add(item: FileSystemItem): this {
+    this.children.push(item)
+    return this
+  }
+
+  remove(item: FileSystemItem): void {
+    this.children = this.children.filter(c => c !== item)
+  }
+
+  getSize(): number {
+    return this.children.reduce((total, child) => total + child.getSize(), 0)
+  }
+
+  render(indent = 0): string {
+    const lines = [`${'  '.repeat(indent)}📁 ${this.name}/`]
+    this.children.forEach(child => lines.push(child.render(indent + 1)))
+    return lines.join('\n')
+  }
+}
+
+// Uso
+const root = new Directory('project')
+  .add(new File('package.json', 512))
+  .add(new File('README.md', 2048))
+  .add(
+    new Directory('src')
+      .add(new File('index.ts', 1024))
+      .add(new File('utils.ts', 768))
+      .add(
+        new Directory('components')
+          .add(new File('Button.tsx', 384))
+          .add(new File('Card.tsx', 512))
+      )
+  )
+
+console.log(root.render())
+console.log(`Total size: ${root.getSize()} bytes`)
+```
+
+```python
+# Python — Expresiones matemáticas como árbol
+from abc import ABC, abstractmethod
+
+class Expression(ABC):
+    @abstractmethod
+    def evaluate(self) -> float: ...
+
+    @abstractmethod
+    def to_string(self) -> str: ...
+
+class Number(Expression):
+    def __init__(self, value: float):
+        self.value = value
+
+    def evaluate(self) -> float:
+        return self.value
+
+    def to_string(self) -> str:
+        return str(self.value)
+
+class BinaryOp(Expression):
+    def __init__(self, left: Expression, operator: str, right: Expression):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def evaluate(self) -> float:
+        l, r = self.left.evaluate(), self.right.evaluate()
+        match self.operator:
+            case '+': return l + r
+            case '-': return l - r
+            case '*': return l * r
+            case '/': return l / r
+        raise ValueError(f'Unknown op: {self.operator}')
+
+    def to_string(self) -> str:
+        return f'({self.left.to_string()} {self.operator} {self.right.to_string()})'
+
+# Construir: (3 + 4) * (2 - 1)
+expr = BinaryOp(
+    BinaryOp(Number(3), '+', Number(4)),
+    '*',
+    BinaryOp(Number(2), '-', Number(1))
+)
+
+print(expr.to_string())  # ((3.0 + 4.0) * (2.0 - 1.0))
+print(expr.evaluate())   # 7.0
+```
+
+```go
+// Go — Menu jerárquico
+package composite
+
+import "fmt"
+
+type MenuItem interface {
+    Render(depth int)
+    Name() string
+}
+
+type LeafItem struct {
+    name   string
+    action func()
+}
+
+func (l *LeafItem) Name() string         { return l.name }
+func (l *LeafItem) Render(depth int)     { fmt.Printf("%s- %s\n", indent(depth), l.name) }
+
+type Menu struct {
+    name     string
+    children []MenuItem
+}
+
+func (m *Menu) Name() string { return m.name }
+func (m *Menu) Add(item MenuItem) { m.children = append(m.children, item) }
+func (m *Menu) Render(depth int) {
+    fmt.Printf("%s+ %s\n", indent(depth), m.name)
+    for _, child := range m.children {
+        child.Render(depth + 1)
+    }
+}
+
+func indent(depth int) string {
+    s := ""
+    for i := 0; i < depth*2; i++ { s += " " }
+    return s
+}
+```
+
+```java
+// Java — Componentes UI
+public abstract class UIComponent {
+    protected String id;
+
+    public UIComponent(String id) { this.id = id; }
+
+    public abstract int getWidth();
+    public abstract int getHeight();
+    public abstract void draw(String indent);
+}
+
+public class Button extends UIComponent {
+    private int width, height;
+
+    public Button(String id, int w, int h) {
+        super(id);
+        this.width = w;
+        this.height = h;
+    }
+
+    public int getWidth()  { return width; }
+    public int getHeight() { return height; }
+    public void draw(String indent) {
+        System.out.println(indent + "[Button:" + id + " " + width + "x" + height + "]");
+    }
+}
+
+public class Panel extends UIComponent {
+    private java.util.List<UIComponent> children = new java.util.ArrayList<>();
+
+    public Panel(String id) { super(id); }
+
+    public void add(UIComponent c) { children.add(c); }
+    public int getWidth()  { return children.stream().mapToInt(UIComponent::getWidth).max().orElse(0); }
+    public int getHeight() { return children.stream().mapToInt(UIComponent::getHeight).sum(); }
+    public void draw(String indent) {
+        System.out.println(indent + "[Panel:" + id + "]");
+        children.forEach(c -> c.draw(indent + "  "));
+    }
+}
+```

@@ -1,0 +1,225 @@
+---
+title: Observer
+category: comportamiento
+difficulty: intermedio
+description: Define una dependencia uno-a-muchos entre objetos, de modo que cuando un objeto cambia de estado, todos sus dependientes son notificados automáticamente.
+also_known_as: ["Event-Subscriber", "Listener", "Publish-Subscribe"]
+tags: ["eventos", "reactividad", "desacoplamiento"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El patrón **Observer** define una suscripción donde múltiples objetos pueden escuchar y reaccionar a eventos o cambios de estado de otro objeto, sin que el objeto emisor conozca los detalles de sus suscriptores.
+
+## Problema
+
+Imagina una hoja de cálculo: cuando cambias una celda, los gráficos y las fórmulas relacionadas deben actualizarse automáticamente. ¿Cómo estructurar esto sin crear dependencias duras y difíciles de mantener?
+
+## Solución
+
+1. El **Subject** (o Publisher) mantiene una lista de observadores y los notifica ante cambios.
+2. Los **Observers** (o Subscribers) se suscriben al Subject e implementan una interfaz de actualización.
+3. Cuando el Subject cambia, recorre la lista y llama al método `update()` de cada Observer.
+
+## Estructura
+
+```
+Subject (interface)
+├── +subscribe(observer: Observer): void
+├── +unsubscribe(observer: Observer): void
+└── +notify(): void
+
+ConcreteSubject extends Subject
+├── -state: any
+└── +getState(): any
+
+Observer (interface)
+└── +update(subject: Subject): void
+
+ConcreteObserverA, ConcreteObserverB implements Observer
+```
+
+## Cuándo usar
+
+- Cuando un cambio en un objeto requiere cambiar otros, y no sabes cuántos objetos necesitan cambiar.
+- Cuando un objeto debe ser capaz de notificar a otros sin hacer suposiciones sobre quiénes son esos objetos.
+- Para implementar sistemas de eventos distribuidos.
+
+```typescript
+// TypeScript — Sistema de monitoreo de stock
+interface StockObserver {
+  update(symbol: string, price: number, change: number): void
+}
+
+class StockMarket {
+  private observers = new Map<string, Set<StockObserver>>()
+  private prices = new Map<string, number>()
+
+  subscribe(symbol: string, observer: StockObserver): void {
+    if (!this.observers.has(symbol)) {
+      this.observers.set(symbol, new Set())
+    }
+    this.observers.get(symbol)!.add(observer)
+  }
+
+  unsubscribe(symbol: string, observer: StockObserver): void {
+    this.observers.get(symbol)?.delete(observer)
+  }
+
+  updatePrice(symbol: string, newPrice: number): void {
+    const oldPrice = this.prices.get(symbol) ?? newPrice
+    const change = ((newPrice - oldPrice) / oldPrice) * 100
+    this.prices.set(symbol, newPrice)
+
+    this.observers.get(symbol)?.forEach(observer => {
+      observer.update(symbol, newPrice, change)
+    })
+  }
+}
+
+class PriceAlertObserver implements StockObserver {
+  constructor(private threshold: number) {}
+
+  update(symbol: string, price: number, change: number): void {
+    if (Math.abs(change) >= this.threshold) {
+      console.log(`ALERT: ${symbol} moved ${change.toFixed(2)}% to $${price}`)
+    }
+  }
+}
+
+class PortfolioTracker implements StockObserver {
+  private holdings = new Map<string, { shares: number; avgCost: number }>()
+
+  addHolding(symbol: string, shares: number, avgCost: number): void {
+    this.holdings.set(symbol, { shares, avgCost })
+  }
+
+  update(symbol: string, price: number): void {
+    const holding = this.holdings.get(symbol)
+    if (!holding) return
+    const pnl = (price - holding.avgCost) * holding.shares
+    console.log(`Portfolio: ${symbol} P&L = $${pnl.toFixed(2)}`)
+  }
+}
+
+// Uso
+const market = new StockMarket()
+const alert = new PriceAlertObserver(2)
+const portfolio = new PortfolioTracker()
+
+portfolio.addHolding('AAPL', 10, 150)
+market.subscribe('AAPL', alert)
+market.subscribe('AAPL', portfolio)
+
+market.updatePrice('AAPL', 155) // 3.33% — dispara alerta
+market.updatePrice('AAPL', 156) // 0.64% — no dispara alerta
+```
+
+```python
+# Python — Sistema de eventos con tipado genérico
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Callable
+from dataclasses import dataclass
+
+T = TypeVar('T')
+
+@dataclass
+class Event(Generic[T]):
+    name: str
+    payload: T
+
+class EventBus(Generic[T]):
+    def __init__(self):
+        self._handlers: list[Callable[[Event[T]], None]] = []
+
+    def subscribe(self, handler: Callable[[Event[T]], None]) -> None:
+        self._handlers.append(handler)
+
+    def unsubscribe(self, handler: Callable[[Event[T]], None]) -> None:
+        self._handlers.remove(handler)
+
+    def publish(self, event: Event[T]) -> None:
+        for handler in self._handlers:
+            handler(event)
+
+# Uso
+bus: EventBus[dict] = EventBus()
+
+def log_handler(event: Event[dict]) -> None:
+    print(f'[LOG] {event.name}: {event.payload}')
+
+def analytics_handler(event: Event[dict]) -> None:
+    print(f'[ANALYTICS] tracking: {event.name}')
+
+bus.subscribe(log_handler)
+bus.subscribe(analytics_handler)
+
+bus.publish(Event('user.signup', {'id': 1, 'email': 'alice@example.com'}))
+```
+
+```go
+// Go — Event emitter genérico
+package observer
+
+import "sync"
+
+type Handler[T any] func(event T)
+
+type EventEmitter[T any] struct {
+    mu       sync.RWMutex
+    handlers []Handler[T]
+}
+
+func (e *EventEmitter[T]) On(handler Handler[T]) {
+    e.mu.Lock()
+    defer e.mu.Unlock()
+    e.handlers = append(e.handlers, handler)
+}
+
+func (e *EventEmitter[T]) Emit(event T) {
+    e.mu.RLock()
+    handlers := make([]Handler[T], len(e.handlers))
+    copy(handlers, e.handlers)
+    e.mu.RUnlock()
+
+    for _, h := range handlers {
+        go h(event)
+    }
+}
+```
+
+```java
+// Java — Observer con generics
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+public class EventEmitter<T> {
+    private final List<Consumer<T>> listeners = new ArrayList<>();
+
+    public void subscribe(Consumer<T> listener) {
+        listeners.add(listener);
+    }
+
+    public void unsubscribe(Consumer<T> listener) {
+        listeners.remove(listener);
+    }
+
+    public void emit(T event) {
+        listeners.forEach(listener -> listener.accept(event));
+    }
+}
+
+// Uso
+EventEmitter<String> emitter = new EventEmitter<>();
+emitter.subscribe(msg -> System.out.println("Handler A: " + msg));
+emitter.subscribe(msg -> System.out.println("Handler B: " + msg));
+emitter.emit("Hello Observers!");
+```
+
+## Patrones relacionados
+
+- **Mediator** — elimina las dependencias directas pero centraliza la comunicación
+- **Command** — puede usarse junto con Observer para implementar undo/redo
+- **Chain of Responsibility** — alternativa cuando un evento solo debe manejarse por un handler

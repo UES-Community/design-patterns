@@ -1,0 +1,248 @@
+---
+title: Strategy
+category: comportamiento
+difficulty: principiante
+description: Define una familia de algoritmos, encapsula cada uno y los hace intercambiables. Permite que el algoritmo varíe independientemente de los clientes que lo usan.
+also_known_as: ["Policy"]
+tags: ["algoritmos", "intercambiable", "contexto"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El patrón **Strategy** permite definir un conjunto de algoritmos, poner cada uno en una clase separada y hacer sus objetos intercambiables. El cliente puede elegir qué algoritmo usar en tiempo de ejecución.
+
+## Problema
+
+Tienes una clase que tiene que realizar una tarea específica de muchas maneras posibles. Por ejemplo, un sistema de pago que acepta tarjeta de crédito, PayPal, y criptomonedas. Sin Strategy, terminas con condicionales `if/else` o `switch` por doquier.
+
+## Solución
+
+1. Extraer cada variante de algoritmo a su propia clase, todas implementando la misma **interfaz Strategy**.
+2. El **Contexto** almacena una referencia a la estrategia actual y puede cambiarla en runtime.
+3. Los clientes pasan la estrategia al contexto o pueden cambiarla cuando sea necesario.
+
+## Estructura
+
+```
+Context
+├── -strategy: Strategy
+├── +setStrategy(strategy: Strategy): void
+└── +executeStrategy(): void
+
+Strategy (interface)
+└── +execute(data: any): any
+
+ConcreteStrategyA, ConcreteStrategyB implements Strategy
+└── +execute(data: any): any
+```
+
+## Cuándo usar
+
+- Cuando quieres usar distintas variantes de un algoritmo dentro de un objeto y cambiar de uno a otro en tiempo de ejecución.
+- Cuando tienes muchas clases similares que solo difieren en su comportamiento.
+- Para aislar la lógica de negocio de los detalles de implementación de algoritmos.
+
+```typescript
+// TypeScript — Sistema de ordenamiento con múltiples estrategias
+interface SortStrategy<T> {
+  sort(data: T[]): T[]
+  name: string
+}
+
+class BubbleSortStrategy<T> implements SortStrategy<T> {
+  name = 'Bubble Sort'
+
+  sort(data: T[]): T[] {
+    const arr = [...data]
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length - i - 1; j++) {
+        if (arr[j] > arr[j + 1]) {
+          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+        }
+      }
+    }
+    return arr
+  }
+}
+
+class QuickSortStrategy<T> implements SortStrategy<T> {
+  name = 'Quick Sort'
+
+  sort(data: T[]): T[] {
+    if (data.length <= 1) return data
+    const pivot = data[Math.floor(data.length / 2)]
+    const left = data.filter(x => x < pivot)
+    const middle = data.filter(x => x === pivot)
+    const right = data.filter(x => x > pivot)
+    return [...this.sort(left), ...middle, ...this.sort(right)]
+  }
+}
+
+class DataSorter<T> {
+  private strategy: SortStrategy<T>
+
+  constructor(strategy: SortStrategy<T>) {
+    this.strategy = strategy
+  }
+
+  setStrategy(strategy: SortStrategy<T>): void {
+    this.strategy = strategy
+  }
+
+  sort(data: T[]): { result: T[]; strategyUsed: string } {
+    return {
+      result: this.strategy.sort(data),
+      strategyUsed: this.strategy.name,
+    }
+  }
+}
+
+// Uso
+const sorter = new DataSorter(new BubbleSortStrategy<number>())
+console.log(sorter.sort([5, 2, 8, 1, 9]))
+
+sorter.setStrategy(new QuickSortStrategy<number>())
+console.log(sorter.sort([5, 2, 8, 1, 9]))
+```
+
+```python
+# Python — Procesadores de pago
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class PaymentResult:
+    success: bool
+    transaction_id: str
+    method: str
+
+class PaymentStrategy(ABC):
+    @abstractmethod
+    def pay(self, amount: float) -> PaymentResult: ...
+
+class CreditCardStrategy(PaymentStrategy):
+    def __init__(self, card_number: str, cvv: str):
+        self.card_number = card_number[-4:]  # solo últimos 4
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Charging ${amount} to card ending in {self.card_number}')
+        return PaymentResult(True, f'CC-{id(self)}', 'credit_card')
+
+class PayPalStrategy(PaymentStrategy):
+    def __init__(self, email: str):
+        self.email = email
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Sending ${amount} via PayPal to {self.email}')
+        return PaymentResult(True, f'PP-{id(self)}', 'paypal')
+
+class CryptoStrategy(PaymentStrategy):
+    def __init__(self, wallet: str):
+        self.wallet = wallet
+
+    def pay(self, amount: float) -> PaymentResult:
+        print(f'Sending ${amount} BTC to {self.wallet[:8]}...')
+        return PaymentResult(True, f'BTC-{id(self)}', 'crypto')
+
+class Checkout:
+    def __init__(self, strategy: PaymentStrategy):
+        self._strategy = strategy
+
+    @property
+    def strategy(self) -> PaymentStrategy:
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, value: PaymentStrategy) -> None:
+        self._strategy = value
+
+    def pay(self, amount: float) -> PaymentResult:
+        return self._strategy.pay(amount)
+
+# Uso
+checkout = Checkout(CreditCardStrategy('4111111111111234', '123'))
+result = checkout.pay(99.99)
+print(result)
+```
+
+```go
+// Go — Compresión de datos con distintas estrategias
+package strategy
+
+import "fmt"
+
+type Compressor interface {
+    Compress(data []byte) ([]byte, error)
+    Decompress(data []byte) ([]byte, error)
+    Name() string
+}
+
+type GzipCompressor struct{}
+func (g *GzipCompressor) Name() string { return "gzip" }
+func (g *GzipCompressor) Compress(data []byte) ([]byte, error) {
+    return append([]byte("[gzip]"), data...), nil
+}
+func (g *GzipCompressor) Decompress(data []byte) ([]byte, error) {
+    return data[6:], nil
+}
+
+type ZstdCompressor struct{}
+func (z *ZstdCompressor) Name() string { return "zstd" }
+func (z *ZstdCompressor) Compress(data []byte) ([]byte, error) {
+    return append([]byte("[zstd]"), data...), nil
+}
+func (z *ZstdCompressor) Decompress(data []byte) ([]byte, error) {
+    return data[6:], nil
+}
+
+type FileProcessor struct {
+    strategy Compressor
+}
+
+func (f *FileProcessor) SetStrategy(s Compressor) { f.strategy = s }
+
+func (f *FileProcessor) Process(data []byte) ([]byte, error) {
+    fmt.Printf("Compressing with %s\n", f.strategy.Name())
+    return f.strategy.Compress(data)
+}
+```
+
+```java
+// Java — Validaciones de formulario
+import java.util.function.Predicate;
+
+public class FormValidator {
+    private Predicate<String> strategy;
+    private String fieldName;
+
+    public FormValidator(String fieldName, Predicate<String> strategy) {
+        this.fieldName = fieldName;
+        this.strategy = strategy;
+    }
+
+    public void setStrategy(Predicate<String> strategy) {
+        this.strategy = strategy;
+    }
+
+    public boolean validate(String value) {
+        return strategy.test(value);
+    }
+}
+
+// Estrategias como lambdas
+var emailValidator = new FormValidator("email",
+    v -> v.matches("^[^@]+@[^@]+\\.[^@]+$"));
+
+var passwordValidator = new FormValidator("password",
+    v -> v.length() >= 8 && v.matches(".*[A-Z].*") && v.matches(".*[0-9].*"));
+
+System.out.println(emailValidator.validate("user@example.com")); // true
+System.out.println(passwordValidator.validate("Passw0rd"));      // true
+```
+
+## Patrones relacionados
+
+- **State** — similar en estructura, pero el State cambia el comportamiento según el estado interno
+- **Command** — Strategy sin parámetros puede implementarse como Command
+- **Template Method** — alternativa basada en herencia en lugar de composición

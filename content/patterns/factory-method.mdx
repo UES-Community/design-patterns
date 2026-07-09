@@ -1,0 +1,241 @@
+---
+title: Factory Method
+category: creacional
+difficulty: intermedio
+description: Define una interfaz para crear un objeto, pero deja que las subclases decidan qué clase instanciar.
+also_known_as: ["Virtual Constructor"]
+tags: ["creación", "polimorfismo", "subclases"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El **Factory Method** define una interfaz para crear objetos en una superclase, pero permite a las subclases alterar el tipo de objetos que se crearán. En lugar de llamar directamente a `new`, el código llama a un método de fábrica.
+
+## Problema
+
+Tienes una clase base que gestiona objetos de un tipo específico, pero necesitas que subclases puedan crear objetos de diferentes tipos concretos sin modificar la clase base.
+
+## Solución
+
+1. Declarar el **producto** como interfaz/clase abstracta.
+2. La clase **creador** declara el factory method como abstracto o con implementación por defecto.
+3. Las **subclases creadoras** sobreescriben el factory method para devolver el tipo concreto apropiado.
+
+## Estructura
+
+```
+Creator (abstract)
+├── +someOperation(): void
+└── +createProduct(): Product  ← factory method
+
+ConcreteCreatorA extends Creator
+└── +createProduct(): ConcreteProductA
+
+ConcreteCreatorB extends Creator
+└── +createProduct(): ConcreteProductB
+
+Product (interface)
+├── ConcreteProductA
+└── ConcreteProductB
+```
+
+## Cuándo usar
+
+- Cuando no sabes de antemano los tipos exactos de objetos que tu código debe crear.
+- Cuando quieres proporcionar a usuarios de tu biblioteca o framework una forma de extender sus componentes internos.
+- Cuando quieres ahorrar recursos reutilizando objetos existentes en lugar de reconstruirlos cada vez.
+
+```typescript
+// TypeScript — Sistema de notificaciones con distintos canales
+interface Notification {
+  send(message: string): void
+  getType(): string
+}
+
+class EmailNotification implements Notification {
+  constructor(private readonly recipient: string) {}
+
+  send(message: string): void {
+    console.log(`EMAIL to ${this.recipient}: ${message}`)
+  }
+
+  getType(): string {
+    return 'email'
+  }
+}
+
+class SlackNotification implements Notification {
+  constructor(private readonly channel: string) {}
+
+  send(message: string): void {
+    console.log(`SLACK #${this.channel}: ${message}`)
+  }
+
+  getType(): string {
+    return 'slack'
+  }
+}
+
+class SMSNotification implements Notification {
+  constructor(private readonly phoneNumber: string) {}
+
+  send(message: string): void {
+    console.log(`SMS to ${this.phoneNumber}: ${message}`)
+  }
+
+  getType(): string {
+    return 'sms'
+  }
+}
+
+// Creador abstracto
+abstract class NotificationService {
+  abstract createNotification(): Notification
+
+  notify(message: string): void {
+    const notification = this.createNotification()
+    console.log(`[${notification.getType().toUpperCase()}] Sending notification...`)
+    notification.send(message)
+  }
+}
+
+// Creadores concretos
+class EmailService extends NotificationService {
+  constructor(private email: string) { super() }
+  createNotification(): Notification {
+    return new EmailNotification(this.email)
+  }
+}
+
+class SlackService extends NotificationService {
+  constructor(private channel: string) { super() }
+  createNotification(): Notification {
+    return new SlackNotification(this.channel)
+  }
+}
+
+// Uso
+const services: NotificationService[] = [
+  new EmailService('alice@example.com'),
+  new SlackService('alerts'),
+]
+
+services.forEach(s => s.notify('Deploy complete!'))
+```
+
+```python
+# Python — Exportadores de documentos
+from abc import ABC, abstractmethod
+
+class Document(ABC):
+    @abstractmethod
+    def export(self, content: str) -> str: ...
+
+class PDFDocument(Document):
+    def export(self, content: str) -> str:
+        return f'[PDF] {content}'
+
+class HTMLDocument(Document):
+    def export(self, content: str) -> str:
+        return f'<html><body>{content}</body></html>'
+
+class MarkdownDocument(Document):
+    def export(self, content: str) -> str:
+        return f'# Export\n\n{content}'
+
+class DocumentExporter(ABC):
+    @abstractmethod
+    def create_document(self) -> Document: ...
+
+    def export(self, content: str) -> str:
+        doc = self.create_document()
+        return doc.export(content)
+
+class PDFExporter(DocumentExporter):
+    def create_document(self) -> Document:
+        return PDFDocument()
+
+class HTMLExporter(DocumentExporter):
+    def create_document(self) -> Document:
+        return HTMLDocument()
+
+# Uso
+exporters = [PDFExporter(), HTMLExporter()]
+for exporter in exporters:
+    print(exporter.export('Hello, World!'))
+```
+
+```go
+// Go — Transportes HTTP con factory method
+package transport
+
+type Transport interface {
+    Request(url string) ([]byte, error)
+}
+
+type Transporter interface {
+    CreateTransport() Transport
+}
+
+type HTTPTransport struct{}
+func (h *HTTPTransport) Request(url string) ([]byte, error) {
+    return []byte("http response"), nil
+}
+
+type HTTPSTransport struct{}
+func (h *HTTPSTransport) Request(url string) ([]byte, error) {
+    return []byte("https response"), nil
+}
+
+type HTTPClient struct{}
+func (c *HTTPClient) CreateTransport() Transport {
+    return &HTTPTransport{}
+}
+
+type HTTPSClient struct{}
+func (c *HTTPSClient) CreateTransport() Transport {
+    return &HTTPSTransport{}
+}
+```
+
+```java
+// Java — Parsers de distintos formatos
+public interface Parser {
+    Object parse(String input);
+}
+
+public class JSONParser implements Parser {
+    public Object parse(String input) {
+        return "Parsed JSON: " + input;
+    }
+}
+
+public class XMLParser implements Parser {
+    public Object parse(String input) {
+        return "Parsed XML: " + input;
+    }
+}
+
+public abstract class DataProcessor {
+    protected abstract Parser createParser();
+
+    public void process(String data) {
+        Parser parser = createParser();
+        Object result = parser.parse(data);
+        System.out.println(result);
+    }
+}
+
+public class JSONProcessor extends DataProcessor {
+    protected Parser createParser() {
+        return new JSONParser();
+    }
+}
+```
+
+## Patrones relacionados
+
+- **Abstract Factory** — a menudo se implementa con Factory Methods
+- **Template Method** — el Factory Method es una especialización del Template Method
+- **Prototype** — alternativa a Factory Method cuando no necesitas crear jerarquías de Creator

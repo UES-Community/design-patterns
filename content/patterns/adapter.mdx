@@ -1,0 +1,199 @@
+---
+title: Adapter
+category: estructural
+difficulty: principiante
+description: Permite que objetos con interfaces incompatibles trabajen juntos, actuando como un traductor entre ellos.
+also_known_as: ["Wrapper"]
+tags: ["interfaz", "compatibilidad", "integración"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El **Adapter** convierte la interfaz de una clase en otra que los clientes esperan. Permite que clases con interfaces incompatibles trabajen juntas, como un adaptador de corriente que permite a un enchufe europeo funcionar en una toma americana.
+
+## Problema
+
+Tienes código existente que funciona bien, y una nueva librería de terceros que hace exactamente lo que necesitas, pero sus interfaces son incompatibles. No puedes modificar ninguno de los dos.
+
+## Cuándo usar
+
+- Cuando quieres usar una clase existente pero su interfaz no coincide con la que necesitas.
+- Cuando quieres crear una clase reutilizable que coopere con clases no relacionadas o imprevisibles.
+- Para integrar librerías de terceros sin acoplar tu código a ellas.
+
+```typescript
+// TypeScript — Adaptar distintas APIs de geolocalización
+interface GeoLocation {
+  getCoordinates(address: string): Promise<{ lat: number; lng: number }>
+}
+
+// API de Google Maps (externa — no podemos modificarla)
+class GoogleMapsAPI {
+  async geocode(addr: string): Promise<{ latitude: number; longitude: number }> {
+    return { latitude: 40.7128, longitude: -74.006 }
+  }
+}
+
+// API de OpenStreetMap (externa — no podemos modificarla)
+class OpenStreetMapAPI {
+  async search(query: string): Promise<{ coord: { lat: string; lon: string } }> {
+    return { coord: { lat: '40.7128', lon: '-74.0060' } }
+  }
+}
+
+// Adapter para Google Maps
+class GoogleMapsAdapter implements GeoLocation {
+  constructor(private api: GoogleMapsAPI) {}
+
+  async getCoordinates(address: string): Promise<{ lat: number; lng: number }> {
+    const result = await this.api.geocode(address)
+    return { lat: result.latitude, lng: result.longitude }
+  }
+}
+
+// Adapter para OpenStreetMap
+class OSMAdapter implements GeoLocation {
+  constructor(private api: OpenStreetMapAPI) {}
+
+  async getCoordinates(address: string): Promise<{ lat: number; lng: number }> {
+    const result = await this.api.search(address)
+    return {
+      lat: parseFloat(result.coord.lat),
+      lng: parseFloat(result.coord.lon),
+    }
+  }
+}
+
+// Servicio que usa la interfaz unificada
+class LocationService {
+  constructor(private geo: GeoLocation) {}
+
+  async findAddress(address: string): Promise<string> {
+    const { lat, lng } = await this.geo.getCoordinates(address)
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  }
+}
+
+// Uso — intercambiable sin cambiar LocationService
+const googleService = new LocationService(
+  new GoogleMapsAdapter(new GoogleMapsAPI())
+)
+const osmService = new LocationService(
+  new OSMAdapter(new OpenStreetMapAPI())
+)
+```
+
+```python
+# Python — Adaptar loggers de distintas librerías
+import logging
+from abc import ABC, abstractmethod
+
+class Logger(ABC):
+    @abstractmethod
+    def log(self, level: str, message: str) -> None: ...
+
+class PythonLoggerAdapter(Logger):
+    def __init__(self, name: str):
+        self._logger = logging.getLogger(name)
+        logging.basicConfig(level=logging.DEBUG)
+
+    def log(self, level: str, message: str) -> None:
+        getattr(self._logger, level.lower(), self._logger.info)(message)
+
+class PrintLogger:
+    """Logger legacy que solo imprime"""
+    def write(self, text: str) -> None:
+        print(f'LEGACY: {text}')
+
+class PrintLoggerAdapter(Logger):
+    def __init__(self, legacy: PrintLogger):
+        self._legacy = legacy
+
+    def log(self, level: str, message: str) -> None:
+        self._legacy.write(f'[{level}] {message}')
+
+# Uso unificado
+def process_data(logger: Logger, data: list) -> None:
+    logger.log('info', f'Processing {len(data)} items')
+    for item in data:
+        logger.log('debug', f'Item: {item}')
+
+process_data(PythonLoggerAdapter('app'), [1, 2, 3])
+process_data(PrintLoggerAdapter(PrintLogger()), [4, 5, 6])
+```
+
+```go
+// Go — Adapter para distintos sistemas de almacenamiento
+package adapter
+
+type Storage interface {
+    Get(key string) (string, error)
+    Set(key, value string) error
+    Delete(key string) error
+}
+
+// Sistema Redis legacy
+type RedisClient struct{}
+func (r *RedisClient) HGet(hash, field string) string  { return "redis_value" }
+func (r *RedisClient) HSet(hash, field, value string)  {}
+func (r *RedisClient) HDel(hash, field string)         {}
+
+// Adapter que convierte Redis a la interfaz Storage
+type RedisAdapter struct {
+    client *RedisClient
+    hash   string
+}
+
+func NewRedisAdapter(client *RedisClient, hash string) Storage {
+    return &RedisAdapter{client: client, hash: hash}
+}
+
+func (r *RedisAdapter) Get(key string) (string, error) {
+    return r.client.HGet(r.hash, key), nil
+}
+
+func (r *RedisAdapter) Set(key, value string) error {
+    r.client.HSet(r.hash, key, value)
+    return nil
+}
+
+func (r *RedisAdapter) Delete(key string) error {
+    r.client.HDel(r.hash, key)
+    return nil
+}
+```
+
+```java
+// Java — Adapter para APIs de pagos
+public interface PaymentGateway {
+    PaymentResult charge(String customerId, long amountCents, String currency);
+}
+
+// Stripe SDK (no modificable)
+public class StripeClient {
+    public StripeCharge createCharge(StripeChargeParams params) {
+        return new StripeCharge("ch_" + System.currentTimeMillis(), "succeeded");
+    }
+}
+
+public class StripeAdapter implements PaymentGateway {
+    private final StripeClient client;
+
+    public StripeAdapter(StripeClient client) {
+        this.client = client;
+    }
+
+    public PaymentResult charge(String customerId, long amountCents, String currency) {
+        var params = new StripeChargeParams(customerId, amountCents, currency);
+        var charge = client.createCharge(params);
+        return new PaymentResult(charge.getId(), "success");
+    }
+}
+```
+
+## Patrones relacionados
+
+- **Bridge** — similar pero separa la abstracción de la implementación desde el diseño inicial
+- **Decorator** — también envuelve un objeto, pero añade responsabilidades en lugar de adaptar la interfaz
+- **Facade** — proporciona una interfaz simplificada a un subsistema complejo

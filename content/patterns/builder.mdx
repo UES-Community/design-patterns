@@ -1,0 +1,268 @@
+---
+title: Builder
+category: creacional
+difficulty: intermedio
+description: Separa la construcción de un objeto complejo de su representación, permitiendo el mismo proceso de construcción crear distintas representaciones.
+also_known_as: []
+tags: ["construcción", "fluent", "inmutabilidad"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El **Builder** construye objetos complejos paso a paso. El patrón permite producir diferentes tipos y representaciones de un objeto usando el mismo código de construcción.
+
+## Problema
+
+Imagina un objeto `House` con muchos campos opcionales: garage, piscina, jardín, número de pisos, etc. Un constructor con todos esos parámetros sería ilegible. El Builder soluciona esto.
+
+## Cuándo usar
+
+- Cuando la construcción de un objeto involucra muchos pasos opcionales.
+- Cuando necesitas crear diferentes representaciones del mismo producto.
+- Cuando el proceso de construcción debe ser independiente de las partes del objeto final.
+
+```typescript
+// TypeScript — Query Builder de base de datos
+class QueryBuilder {
+  private table = ''
+  private conditions: string[] = []
+  private selectedFields = ['*']
+  private limitValue?: number
+  private offsetValue?: number
+  private orderByClause?: string
+
+  from(table: string): this {
+    this.table = table
+    return this
+  }
+
+  select(...fields: string[]): this {
+    this.selectedFields = fields
+    return this
+  }
+
+  where(condition: string): this {
+    this.conditions.push(condition)
+    return this
+  }
+
+  limit(n: number): this {
+    this.limitValue = n
+    return this
+  }
+
+  offset(n: number): this {
+    this.offsetValue = n
+    return this
+  }
+
+  orderBy(field: string, direction: 'ASC' | 'DESC' = 'ASC'): this {
+    this.orderByClause = `${field} ${direction}`
+    return this
+  }
+
+  build(): string {
+    if (!this.table) throw new Error('Table is required')
+
+    let query = `SELECT ${this.selectedFields.join(', ')} FROM ${this.table}`
+
+    if (this.conditions.length > 0) {
+      query += ` WHERE ${this.conditions.join(' AND ')}`
+    }
+    if (this.orderByClause) query += ` ORDER BY ${this.orderByClause}`
+    if (this.limitValue !== undefined) query += ` LIMIT ${this.limitValue}`
+    if (this.offsetValue !== undefined) query += ` OFFSET ${this.offsetValue}`
+
+    return query
+  }
+}
+
+// Uso — API fluida
+const query = new QueryBuilder()
+  .from('users')
+  .select('id', 'name', 'email')
+  .where('age > 18')
+  .where('active = true')
+  .orderBy('created_at', 'DESC')
+  .limit(10)
+  .offset(20)
+  .build()
+
+console.log(query)
+// SELECT id, name, email FROM users WHERE age > 18 AND active = true ORDER BY created_at DESC LIMIT 10 OFFSET 20
+```
+
+```python
+# Python — Builder de configuración de servidor
+from dataclasses import dataclass, field
+from typing import Optional
+
+@dataclass
+class ServerConfig:
+    host: str
+    port: int
+    max_connections: int
+    timeout_seconds: int
+    tls_enabled: bool
+    allowed_origins: list[str]
+    debug: bool
+
+class ServerConfigBuilder:
+    def __init__(self):
+        self._host = 'localhost'
+        self._port = 8080
+        self._max_connections = 100
+        self._timeout = 30
+        self._tls = False
+        self._origins: list[str] = ['*']
+        self._debug = False
+
+    def host(self, host: str) -> 'ServerConfigBuilder':
+        self._host = host
+        return self
+
+    def port(self, port: int) -> 'ServerConfigBuilder':
+        if not 1 <= port <= 65535:
+            raise ValueError(f'Invalid port: {port}')
+        self._port = port
+        return self
+
+    def max_connections(self, n: int) -> 'ServerConfigBuilder':
+        self._max_connections = n
+        return self
+
+    def with_tls(self) -> 'ServerConfigBuilder':
+        self._tls = True
+        return self
+
+    def allow_origins(self, *origins: str) -> 'ServerConfigBuilder':
+        self._origins = list(origins)
+        return self
+
+    def debug(self) -> 'ServerConfigBuilder':
+        self._debug = True
+        return self
+
+    def build(self) -> ServerConfig:
+        return ServerConfig(
+            host=self._host,
+            port=self._port,
+            max_connections=self._max_connections,
+            timeout_seconds=self._timeout,
+            tls_enabled=self._tls,
+            allowed_origins=self._origins,
+            debug=self._debug,
+        )
+
+config = (
+    ServerConfigBuilder()
+    .host('0.0.0.0')
+    .port(443)
+    .with_tls()
+    .allow_origins('https://app.example.com')
+    .max_connections(500)
+    .build()
+)
+```
+
+```go
+// Go — HTTP Request Builder
+package builder
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+)
+
+type RequestBuilder struct {
+    method  string
+    url     string
+    headers map[string]string
+    body    any
+}
+
+func NewRequest(method, url string) *RequestBuilder {
+    return &RequestBuilder{
+        method:  method,
+        url:     url,
+        headers: make(map[string]string),
+    }
+}
+
+func (b *RequestBuilder) Header(key, value string) *RequestBuilder {
+    b.headers[key] = value
+    return b
+}
+
+func (b *RequestBuilder) JSON(body any) *RequestBuilder {
+    b.body = body
+    b.headers["Content-Type"] = "application/json"
+    return b
+}
+
+func (b *RequestBuilder) Bearer(token string) *RequestBuilder {
+    b.headers["Authorization"] = "Bearer " + token
+    return b
+}
+
+func (b *RequestBuilder) Build() (*http.Request, error) {
+    var bodyReader *bytes.Reader
+    if b.body != nil {
+        data, err := json.Marshal(b.body)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = bytes.NewReader(data)
+    }
+    req, err := http.NewRequest(b.method, b.url, bodyReader)
+    if err != nil {
+        return nil, err
+    }
+    for k, v := range b.headers {
+        req.Header.Set(k, v)
+    }
+    return req, nil
+}
+```
+
+```java
+// Java — Email builder inmutable
+public final class Email {
+    private final String from;
+    private final java.util.List<String> to;
+    private final String subject;
+    private final String body;
+    private final boolean html;
+
+    private Email(Builder builder) {
+        this.from = builder.from;
+        this.to = java.util.Collections.unmodifiableList(builder.to);
+        this.subject = builder.subject;
+        this.body = builder.body;
+        this.html = builder.html;
+    }
+
+    public static class Builder {
+        private String from;
+        private java.util.List<String> to = new java.util.ArrayList<>();
+        private String subject = "";
+        private String body = "";
+        private boolean html = false;
+
+        public Builder from(String from) { this.from = from; return this; }
+        public Builder to(String... recipients) {
+            this.to.addAll(java.util.Arrays.asList(recipients));
+            return this;
+        }
+        public Builder subject(String subject) { this.subject = subject; return this; }
+        public Builder body(String body) { this.body = body; return this; }
+        public Builder asHtml() { this.html = true; return this; }
+        public Email build() {
+            if (from == null || to.isEmpty()) throw new IllegalStateException("from and to are required");
+            return new Email(this);
+        }
+    }
+}
+```

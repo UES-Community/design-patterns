@@ -1,0 +1,224 @@
+---
+title: Template Method
+category: comportamiento
+difficulty: principiante
+description: Define el esqueleto de un algoritmo en la superclase, delegando algunos pasos a las subclases sin cambiar la estructura general del algoritmo.
+also_known_as: []
+tags: ["herencia", "algoritmo", "hook"]
+languages: ["typescript", "python", "go", "java"]
+---
+
+## Propósito
+
+El **Template Method** define los pasos de un algoritmo en una clase base, permite que las subclases implementen o sobreescriban pasos específicos sin cambiar el flujo general del algoritmo.
+
+## Cuándo usar
+
+- Cuando quieres que los clientes extiendan pasos particulares de un algoritmo, no el algoritmo completo.
+- Cuando tienes varias clases que contienen algoritmos casi idénticos con algunas diferencias pequeñas.
+
+```typescript
+// TypeScript — Pipeline de importación de datos
+abstract class DataImporter {
+  // Template method — define el flujo completo
+  async import(source: string): Promise<void> {
+    console.log(`Starting import from ${source}`)
+
+    const raw = await this.readData(source)
+    const validated = this.validate(raw)
+    const transformed = this.transform(validated)
+    await this.save(transformed)
+
+    this.onComplete(transformed.length) // hook
+  }
+
+  protected abstract readData(source: string): Promise<string[]>
+  protected abstract validate(data: string[]): string[]
+  protected abstract transform(data: string[]): Record<string, unknown>[]
+
+  protected async save(data: Record<string, unknown>[]): Promise<void> {
+    console.log(`Saving ${data.length} records...`)
+  }
+
+  // Hook — puede sobreescribirse, tiene implementación por defecto
+  protected onComplete(count: number): void {
+    console.log(`Import complete: ${count} records`)
+  }
+}
+
+class CSVImporter extends DataImporter {
+  protected async readData(source: string): Promise<string[]> {
+    console.log(`Reading CSV from ${source}`)
+    return ['id,name,age', '1,Alice,30', '2,Bob,25']
+  }
+
+  protected validate(data: string[]): string[] {
+    return data.filter(line => line.split(',').length === 3)
+  }
+
+  protected transform(data: string[]): Record<string, unknown>[] {
+    const [header, ...rows] = data
+    const keys = header.split(',')
+    return rows.map(row => {
+      const values = row.split(',')
+      return Object.fromEntries(keys.map((k, i) => [k, values[i]]))
+    })
+  }
+}
+
+class JSONImporter extends DataImporter {
+  protected async readData(source: string): Promise<string[]> {
+    console.log(`Reading JSON from ${source}`)
+    return ['{"id":1,"name":"Alice"}', '{"id":2,"name":"Bob"}']
+  }
+
+  protected validate(data: string[]): string[] {
+    return data.filter(item => {
+      try { JSON.parse(item); return true }
+      catch { return false }
+    })
+  }
+
+  protected transform(data: string[]): Record<string, unknown>[] {
+    return data.map(item => JSON.parse(item))
+  }
+
+  protected onComplete(count: number): void {
+    super.onComplete(count)
+    console.log('JSON import finished successfully')
+  }
+}
+
+// Uso
+const csvImporter = new CSVImporter()
+await csvImporter.import('data.csv')
+```
+
+```python
+# Python — Generador de reportes con distintos formatos
+from abc import ABC, abstractmethod
+
+class ReportGenerator(ABC):
+    def generate(self, data: list[dict]) -> str:
+        """Template method"""
+        header = self.make_header()
+        body = self.make_body(data)
+        footer = self.make_footer()
+        return self.assemble(header, body, footer)
+
+    @abstractmethod
+    def make_header(self) -> str: ...
+
+    @abstractmethod
+    def make_body(self, data: list[dict]) -> str: ...
+
+    def make_footer(self) -> str:
+        return ''  # Hook con implementación por defecto
+
+    def assemble(self, header: str, body: str, footer: str) -> str:
+        return '\n'.join(filter(bool, [header, body, footer]))
+
+class HTMLReport(ReportGenerator):
+    def make_header(self) -> str:
+        return '<html><body><h1>Report</h1><table>'
+
+    def make_body(self, data: list[dict]) -> str:
+        rows = ''.join(
+            f"<tr>{''.join(f'<td>{v}</td>' for v in row.values())}</tr>"
+            for row in data
+        )
+        return rows
+
+    def make_footer(self) -> str:
+        return '</table></body></html>'
+
+class MarkdownReport(ReportGenerator):
+    def make_header(self) -> str:
+        return '# Report\n'
+
+    def make_body(self, data: list[dict]) -> str:
+        if not data:
+            return ''
+        headers = ' | '.join(data[0].keys())
+        separator = ' | '.join(['---'] * len(data[0]))
+        rows = '\n'.join(' | '.join(str(v) for v in row.values()) for row in data)
+        return f'{headers}\n{separator}\n{rows}'
+
+# Uso
+data = [{'name': 'Alice', 'score': 95}, {'name': 'Bob', 'score': 87}]
+print(HTMLReport().generate(data))
+print(MarkdownReport().generate(data))
+```
+
+```go
+// Go — Pipeline de procesamiento
+package template
+
+import "fmt"
+
+type Processor interface {
+    ReadInput() []string
+    Process(items []string) []string
+    WriteOutput(items []string)
+    Run()
+}
+
+type BaseProcessor struct {
+    Processor
+}
+
+func (b *BaseProcessor) Run() {
+    items := b.Processor.ReadInput()
+    processed := b.Processor.Process(items)
+    b.Processor.WriteOutput(processed)
+}
+
+type UpperCaseProcessor struct{ BaseProcessor }
+func (u *UpperCaseProcessor) ReadInput() []string { return []string{"hello", "world"} }
+func (u *UpperCaseProcessor) Process(items []string) []string {
+    result := make([]string, len(items))
+    for i, s := range items {
+        result[i] = fmt.Sprintf("%s → UPPER", s)
+    }
+    return result
+}
+func (u *UpperCaseProcessor) WriteOutput(items []string) {
+    for _, item := range items { fmt.Println(item) }
+}
+```
+
+```java
+// Java — Game loop con Template Method
+public abstract class GameEngine {
+    // Template method
+    public final void run() {
+        initialize();
+        while (!isDone()) {
+            processInput();
+            update();
+            render();
+        }
+        cleanup();
+    }
+
+    protected abstract void initialize();
+    protected abstract void processInput();
+    protected abstract void update();
+    protected abstract void render();
+    protected abstract boolean isDone();
+
+    protected void cleanup() {
+        System.out.println("Game over.");
+    }
+}
+
+public class PongGame extends GameEngine {
+    private int tick = 0;
+
+    protected void initialize() { System.out.println("Pong started!"); }
+    protected void processInput() { /* lee teclado */ }
+    protected void update() { tick++; }
+    protected void render() { System.out.println("Render frame " + tick); }
+    protected boolean isDone() { return tick >= 3; }
+}
+```
